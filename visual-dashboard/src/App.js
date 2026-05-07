@@ -195,16 +195,12 @@ import React, { useEffect, useState, useRef } from 'react';
     // ---------------- VISUAL REFS ----------------
     const visualCompletedRef = useRef(false);
     const visualProcessedRef = useRef(0);
-    const totalVisualScenariosRef = useRef(0); // set from TOTAL_SCENARIOS:N log or calculated
+    const visualLogsEndRef = useRef(null);
 
     // ---------------- PAGE REFS ----------------
     const pageStartedRef = useRef(false);
     const completedRef = useRef(false);
     const processedURLsRef = useRef(0);
-    const totalURLsRef = useRef(0);
-
-    // ---------------- LOG AUTO-SCROLL REFS ----------------
-    const visualLogsEndRef = useRef(null);
     const pageLogsEndRef = useRef(null);
 
     // ---------------- COMMON ----------------
@@ -217,17 +213,17 @@ import React, { useEffect, useState, useRef } from 'react';
     const [baselineProgress, setBaselineProgress] = useState(0);
     const [testProgress, setTestProgress] = useState(0);
     const [visualStatus, setVisualStatus] = useState('');
-    const [baselineDone, setBaselineDone] = useState(false);
-    const [testDone, setTestDone] = useState(false);
+    const [baselineCompleted, setBaselineCompleted] = useState(false);
+    const [testCompleted, setTestCompleted] = useState(false);
 
     // ---------------- PAGE ----------------
     const [pageLogs, setPageLogs] = useState([]);
     const [pageProgress, setPageProgress] = useState(0);
     const [pageStatus, setPageStatus] = useState('');
-    const [pageDone, setPageDone] = useState(false);
     const [selectedScript, setSelectedScript] = useState('');
     const [exportReport, setExportReport] = useState('');
     const [downloadError, setDownloadError] = useState('');
+    const [pageTestCompleted, setPageTestCompleted] = useState(false);
 
     // ---------------- RESTART ----------------
     const [serverRestartStatus, setServerRestartStatus] = useState('');   // '' | 'restarting' | 'done' | 'error'
@@ -235,9 +231,9 @@ import React, { useEffect, useState, useRef } from 'react';
 
     // ---------------- DEVICES ----------------
     const [viewports, setViewports] = useState([
-      { label: 'android', width: 1080, height: 2340, enabled: true },
-      { label: 'tablet', width: 1280, height: 800, enabled: true },
-      { label: 'web', width: 1920, height: 1080, enabled: true }
+      { label: 'phone', width: 375, height: 667, enabled: true },
+      { label: 'tablet', width: 768, height: 1024, enabled: true },
+      { label: 'desktop', width: 1366, height: 768, enabled: true }
     ]);
 
     const [newDevice, setNewDevice] = useState({ label: '', width: '', height: '' });
@@ -253,10 +249,45 @@ import React, { useEffect, useState, useRef } from 'react';
       message: ''
     });
 
+    // ---------------- DYNAMIC CONFIG ----------------
     // Total scenarios = pages.length × scenarios-per-page × viewports selected
-    // generateScenarios.js: pages[] has 2 entries, each produces 1 scenario (_Full_Page)
-    const PAGES_COUNT = 2;
-    const SCENARIOS_PER_PAGE = 1;
+    // Loaded dynamically from backstop.json
+    const [PAGES_COUNT, setPagesCount] = useState(150);
+    const [SCENARIOS_PER_PAGE, setScenariosPerPage] = useState(1);
+
+    // ---------------- AUTO SCROLL ----------------
+    useEffect(() => {
+      visualLogsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [visualLogs]);
+
+    useEffect(() => {
+      pageLogsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [pageLogs]);
+
+    // ---------------- LOAD DYNAMIC CONFIG FROM BACKSTOP.JSON ----------------
+    useEffect(() => {
+      const loadConfig = async () => {
+        try {
+          const response = await fetch('/backstop.json');
+          const config = await response.json();
+          
+          // Get page count from scenarios array
+          const scenariosCount = config.scenarios?.length || 150;
+          setPagesCount(scenariosCount);
+          
+          // Get scenarios per page from viewports array
+          const viewportsCount = config.viewports?.length || 1;
+          setScenariosPerPage(viewportsCount);
+        } catch (error) {
+          console.error('Error loading backstop.json:', error);
+          // Fall back to defaults if fetch fails
+          setPagesCount(150);
+          setScenariosPerPage(1);
+        }
+      };
+      
+      loadConfig();
+    }, []);
 
     // ---------------- SSE ----------------
     useEffect(() => {
@@ -271,19 +302,11 @@ import React, { useEffect, useState, useRef } from 'react';
 
           if (visualCompletedRef.current) return;
 
-          // Capture total scenarios if server emits TOTAL_SCENARIOS:N
-          const totalScenariosMatch = message.match(/TOTAL_SCENARIOS:(\d+)/);
-          if (totalScenariosMatch) {
-            totalVisualScenariosRef.current = parseInt(totalScenariosMatch[1], 10);
-          }
-
           if (message.includes('SCENARIO >')) {
             visualProcessedRef.current += 1;
-            // Use server-reported total if available, else calculate from known constants
-            const total = totalVisualScenariosRef.current ||
-              (PAGES_COUNT * SCENARIOS_PER_PAGE * selectedCount);
+            const totalScenarios = PAGES_COUNT * SCENARIOS_PER_PAGE * selectedCount;
             const newProgress = Math.min(
-              2 + Math.round((visualProcessedRef.current / total) * 93),
+              5 + Math.round((visualProcessedRef.current / totalScenarios) * 90),
               95
             );
             if (currentMode === 'reference') setBaselineProgress(newProgress);
@@ -294,10 +317,10 @@ import React, { useEffect, useState, useRef } from 'react';
             visualCompletedRef.current = true;
             if (currentMode === 'reference') {
               setBaselineProgress(100);
-              setBaselineDone(true);
+              setBaselineCompleted(true);
             } else {
               setTestProgress(100);
-              setTestDone(true);
+              setTestCompleted(true);
             }
             setActiveAction('');
           }
@@ -307,50 +330,30 @@ import React, { useEffect, useState, useRef } from 'react';
         if (currentMode === 'broken-links') {
           setPageLogs(prev => [...prev, message]);
 
-          // LOCK: once completed ignore everything — prevents reset
-          if (completedRef.current) return;
-
-          // COMPLETION: "150 passed (5.4m)" or PROCESS_COMPLETED
           const isCompletion =
             /^\d+ (passed|failed) \(/.test(message.trim()) ||
             message.includes('PROCESS_COMPLETED');
 
-          // TOTAL: Look for "TOTAL_URLS:N" pattern emitted from test files
-          // Fallback to "Running N tests using M workers" pattern
-          const totalURLsMatch = message.match(/TOTAL_URLS:(\d+)/);
-          if (totalURLsMatch) {
-            totalURLsRef.current = parseInt(totalURLsMatch[1], 10);
-          }
-          
-          const totalMatch = message.match(/Running (\d+) tests? using/i);
-          if (totalMatch && totalURLsRef.current === 0) {
-            totalURLsRef.current = parseInt(totalMatch[1], 10);
-          }
+          if (completedRef.current) return;
 
-          // START: first non-completion log kicks off the bar
           if (!pageStartedRef.current && !isCompletion) {
             pageStartedRef.current = true;
-            setPageProgress(2);
+            setPageProgress(5);
           }
 
-          // PROGRESS: "🔍 URL:" fires exactly once per URL in both scripts
-          // Load Time Check:   🔍 URL: https://...   (from loadTimeCheck.spec.ts)
-          // Status Code Check: 🔍 URL: https://...   (from statusCodeCheck.spec.ts)
-          const isURLLine = message.includes('🔍 URL:');
+          const isTestResult = /^[✓✗×]\s+\d+\s+\[/.test(message.trim());
 
-          if (pageStartedRef.current && !isCompletion && isURLLine) {
+          if (pageStartedRef.current && !isCompletion && isTestResult) {
             processedURLsRef.current += 1;
-            // Use captured total; fallback to 150 for backwards compatibility
-            const total = totalURLsRef.current || 150;
-            const newProgress = Math.min(2 + Math.round((processedURLsRef.current / total) * 93), 95);
+            const total = 150;
+            const newProgress = Math.min(5 + Math.round((processedURLsRef.current / total) * 90), 95);
             setPageProgress(newProgress);
           }
 
-          // COMPLETION: snap to 100% and lock
           if (isCompletion && pageStartedRef.current) {
             completedRef.current = true;
             setPageProgress(100);
-            setPageDone(true);
+            setPageTestCompleted(true);
             setActiveAction('');
             if (/^\d+ passed \(/.test(message.trim())) setPageStatus('PASS');
             else if (/^\d+ failed \(/.test(message.trim())) setPageStatus('FAIL');
@@ -361,34 +364,20 @@ import React, { useEffect, useState, useRef } from 'react';
       return () => eventSource.close();
     }, [currentMode, selectedCount]);
 
-    // ---------------- AUTO SCROLL LOGS ----------------
-    useEffect(() => {
-      if (visualLogsEndRef.current) {
-        visualLogsEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, [visualLogs]);
-
-    useEffect(() => {
-      if (pageLogsEndRef.current) {
-        pageLogsEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, [pageLogs]);
-
     // ---------------- RUN VISUAL ----------------
     const runTest = async (mode) => {
       if (selectedCount === 0) return;
 
       visualCompletedRef.current = false;
       visualProcessedRef.current = 0;
-      totalVisualScenariosRef.current = 0;
-      setBaselineDone(false);
-      setTestDone(false);
 
       setActiveAction(mode);
       setVisualLogs([]);
       setBaselineProgress(0);
       setTestProgress(0);
       setVisualStatus('');
+      setBaselineCompleted(false);
+      setTestCompleted(false);
       setCurrentMode(mode);
 
       await axios.post('http://localhost:3001/run-test', {
@@ -404,13 +393,12 @@ import React, { useEffect, useState, useRef } from 'react';
       pageStartedRef.current = false;
       completedRef.current = false;
       processedURLsRef.current = 0;
-      totalURLsRef.current = 0;
 
       setActiveAction('broken-links');
       setPageLogs([]);
       setPageProgress(0);
       setPageStatus('');
-      setPageDone(false);
+      setPageTestCompleted(false);
       setCurrentMode('broken-links');
 
       await axios.post('http://localhost:3001/run-broken-links', {
@@ -777,24 +765,20 @@ import React, { useEffect, useState, useRef } from 'react';
               {activeAction === 'reference' && (
                 <div style={{...styles.statusBadge, ...styles.statusRunning}}>⏳ Running Baseline...</div>
               )}
-              {(activeAction === 'reference' || baselineDone) && (
+              {baselineCompleted && (
+                <div style={{...styles.statusBadge, ...styles.statusPass}}>✅ Baseline Complete</div>
+              )}
+              {(activeAction === 'reference' || baselineCompleted) && (
                 <div style={styles.progressContainer}>
                   <div style={styles.progressBar}>
                     <div style={{
                       ...styles.progressFill,
                       width: `${baselineProgress}%`,
-                      background: baselineDone && baselineProgress === 100
-                        ? 'linear-gradient(90deg, #2e7d32 0%, #1b5e20 100%)'
-                        : 'linear-gradient(90deg, #4caf50 0%, #45a049 100%)'
+                      background: 'linear-gradient(90deg, #4caf50 0%, #45a049 100%)'
                     }}>
                       {baselineProgress > 10 && `${baselineProgress}%`}
                     </div>
                   </div>
-                  {baselineDone && baselineProgress === 100 && (
-                    <div style={{...styles.statusBadge, ...styles.statusPass, marginTop: '6px'}}>
-                      ✅ Baseline Complete
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -830,24 +814,20 @@ import React, { useEffect, useState, useRef } from 'react';
               {activeAction === 'test' && (
                 <div style={{...styles.statusBadge, ...styles.statusRunning}}>⏳ Running Test...</div>
               )}
-              {(activeAction === 'test' || testDone) && (
+              {testCompleted && (
+                <div style={{...styles.statusBadge, ...styles.statusPass}}>✅ Test Complete</div>
+              )}
+              {(activeAction === 'test' || testCompleted) && (
                 <div style={styles.progressContainer}>
                   <div style={styles.progressBar}>
                     <div style={{
                       ...styles.progressFill,
                       width: `${testProgress}%`,
-                      background: testDone && testProgress === 100
-                        ? 'linear-gradient(90deg, #1565c0 0%, #0d47a1 100%)'
-                        : 'linear-gradient(90deg, #2196f3 0%, #0b7dda 100%)'
+                      background: 'linear-gradient(90deg, #2196f3 0%, #0b7dda 100%)'
                     }}>
                       {testProgress > 10 && `${testProgress}%`}
                     </div>
                   </div>
-                  {testDone && testProgress === 100 && (
-                    <div style={{...styles.statusBadge, ...styles.statusPass, marginTop: '6px'}}>
-                      ✅ Test Complete
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -938,32 +918,32 @@ import React, { useEffect, useState, useRef } from 'react';
             </div>
 
             {/* PROGRESS */}
-            {(activeAction === 'broken-links' || pageDone) && (
+            {(activeAction === 'broken-links' || pageTestCompleted) && (
               <div style={styles.card}>
                 <div style={styles.label}>📈 Progress</div>
+                {activeAction === 'broken-links' && (
+                  <div style={{...styles.statusBadge, ...styles.statusRunning, marginBottom: '15px'}}>
+                    ⏳ {selectedScript.includes('statusCode') ? 'Status Code Check' : 'Load Time Check'} in progress...
+                  </div>
+                )}
+                {pageTestCompleted && (
+                  <div style={{...styles.statusBadge, ...(pageStatus === 'PASS' ? styles.statusPass : styles.statusFail), marginBottom: '15px'}}>
+                    {pageStatus === 'PASS' ? '✅ Test Complete - PASS' : '❌ Test Complete - FAIL'}
+                  </div>
+                )}
                 <div style={styles.progressBar}>
                   <div style={{
                     ...styles.progressFill,
                     width: `${pageProgress}%`,
                     background: pageStatus === 'FAIL'
                       ? 'linear-gradient(90deg, #f44336 0%, #d32f2f 100%)'
-                      : pageDone && pageProgress === 100
-                        ? 'linear-gradient(90deg, #2e7d32 0%, #1b5e20 100%)'
-                        : 'linear-gradient(90deg, #4caf50 0%, #45a049 100%)'
+                      : 'linear-gradient(90deg, #4caf50 0%, #45a049 100%)'
                   }}>
                     {pageProgress > 10 && `${Math.round(pageProgress)}%`}
                   </div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
                   <div style={styles.progressText}>{Math.round(pageProgress)}%</div>
-                  {pageStatus && (
-                    <div style={{
-                      ...styles.statusBadge,
-                      ...(pageStatus === 'PASS' ? styles.statusPass : styles.statusFail)
-                    }}>
-                      {pageStatus === 'PASS' ? '✅ PASS' : '❌ FAIL'}
-                    </div>
-                  )}
                 </div>
               </div>
             )}

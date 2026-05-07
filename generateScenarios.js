@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const xml2js = require('xml2js');
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 
 const mode = process.argv[2] || 'test';
 const baseUrl = 'https://www.softwebsolutions.com';
@@ -10,29 +10,161 @@ const sitemapUrl = `${baseUrl}/sitemap.xml`;
 
 const BATCH_SIZE = 50;
 
-// ------------------ LOAD PAGES FROM EXCEL ------------------
-// Reads URLs from ./tests/PriorityPagesList.xlsx (single "URL" column)
-// Strips baseUrl to get path only e.g. https://www.softwebsolutions.com/about/ → /about/
-const XLSX = require('xlsx');
-const inputFilePath = path.resolve(__dirname, 'tests', 'PriorityPagesList.xlsx');
-
-if (!fs.existsSync(inputFilePath)) {
-  console.error(`❌ Excel file not found at: ${inputFilePath}`);
-  process.exit(1);
-}
-
-const workbook = XLSX.readFile(inputFilePath);
-const sheet = workbook.Sheets[workbook.SheetNames[0]];
-const xlsxRows = XLSX.utils.sheet_to_json(sheet);
-
-const pages = xlsxRows
-  .map(row => {
-    const url = row['URL'] || row['url'] || Object.values(row)[0] || '';
-    return url.toString().trim().replace(baseUrl, '') || '/';
-  })
-  .filter(p => p.length > 0);
-
-console.log(`📋 Loaded ${pages.length} pages from PriorityPagesList.xlsx`);
+// ------------------ SOURCE OF TRUTH ------------------
+// Add or remove paths here to control which pages are visually tested.
+// Each path must exist in the sitemap — missing ones are automatically skipped.
+const pages = [
+  "/",
+  "/about-softweb-solutions/",
+  "/adaptive-ai-development-company/",
+  "/agentforce-consulting-services/",
+  "/agentic-ai-services/",
+  "/ai-agent-development-company/",
+  "/ai-anomaly-detection/",
+  "/ai-automation-testing-services/",
+  "/ai-chatbot-development-company/",
+  "/ai-consulting-services/",
+  "/ai-defect-detection-visual-inspection/",
+  "/ai-development-services/",
+  "/ai-powered-inventory-management/",
+  "/ai-prompt-engineering-services/",
+  "/aiops-solutions/",
+  "/application-managed-services/",
+  "/automated-data-capture-solutions/",
+  "/automated-quality-control-inspection-with-ai/",
+  "/autonomous-ai-agents-development/",
+  "/aws-cloud-migration-services/",
+  "/aws-data-analytics-consulting/",
+  "/aws-sagemaker-consulting-services/",
+  "/aws-services/",
+  "/azure-ai-services/",
+  "/azure-cloud-service/",
+  "/azure-consulting-services/",
+  "/azure-data-services/",
+  "/azure-devops-consulting-services/",
+  "/big-data-services/",
+  "/business-intelligence-consulting/",
+  "/business-process-automation-services/",
+  "/client-testimonial/",
+  "/cloud-application-development-services/",
+  "/cloud-consulting-services/",
+  "/cloud-managed-services/",
+  "/cloud-migration-services/",
+  "/cloud-transformation-services/",
+  "/computer-vision/",
+  "/custom-net-development-services/",
+  "/custom-software-development/",
+  "/customer-care-bot-development/",
+  "/customer-data-platform/",
+  "/dashboard-development-services/",
+  "/data-analytics-banking-dashboard/",
+  "/data-analytics-finance-dashboard/",
+  "/data-analytics-services/",
+  "/data-engineering-consulting-services/",
+  "/data-governance-services/",
+  "/data-integration-services/",
+  "/data-managed-services/",
+  "/data-migration-services/",
+  "/data-pipeline-automation-services/",
+  "/data-science-development/",
+  "/data-visualization-consulting/",
+  "/databricks-consulting-services/",
+  "/decision-intelligence-system/",
+  "/deep-learning-solutions/",
+  "/defect-detection-in-packaging/",
+  "/devops-consulting-services/",
+  "/digital-process-automation-services/",
+  "/digital-supply-chain-solutions/",
+  "/digital-supply-chain/",
+  "/digital-transformation-consulting/",
+  "/edge-ai-solutions/",
+  "/enterprise-app-development/",
+  "/enterprise-data-management-services/",
+  "/enterprise-data-warehouse/",
+  "/fabric-consulting-services/",
+  "/face-recognition-services/",
+  "/finance-industry/",
+  "/flutter-app-development-services/",
+  "/front-end-development/",
+  "/full-stack-development-company/",
+  "/generative-ai-consulting-services/",
+  "/hybrid-cloud-services/",
+  "/image-annotation-services/",
+  "/image-processing-services/",
+  "/industries/",
+  "/intelligent-automation-services/",
+  "/intelligent-document-processing-solutions/",
+  "/intelligent-forecasting-services/",
+  "/intelligent-video-analytics-solutions/",
+  "/intelligent-virtual-assistant/",
+  "/inventory-analytics-dashboards/",
+  "/large-language-model-development/",
+  "/legacy-application-modernization/",
+  "/llmops-services/",
+  "/machine-learning-consulting/",
+  "/machine-learning-services/",
+  "/machine-monitoring-system/",
+  "/managed-services-provider/",
+  "/manufacturing-industry/",
+  "/microservices/",
+  "/microsoft-365-consulting-services/",
+  "/microsoft-consulting-services/",
+  "/microsoft-copilot-studio-consulting/",
+  "/microsoft-hololens-app-development-company/",
+  "/microsoft-viva-consulting/",
+  "/mlops-consulting-services/",
+  "/mobile-app-development/",
+  "/mulesoft-consulting-services/",
+  "/multicloud-managed-services/",
+  "/natural-language-processing-services/",
+  "/net-maui-development-services/",
+  "/nodejs-application-development/",
+  "/partner-relationship-management/",
+  "/power-automate-consulting/",
+  "/power-bi-consulting-services/",
+  "/power-bi-oee-dashboards/",
+  "/power-platform-consulting-services/",
+  "/powerapps-consulting-services/",
+  "/predictive-analytics-services/",
+  "/product-engineering-service/",
+  "/product-information-management-system/",
+  "/production-line-monitoring-solution/",
+  "/python-development-services/",
+  "/quality-inspection-in-manufacturing/",
+  "/rag-as-a-service/",
+  "/react-native-app-development-services/",
+  "/reactjs-development-services/",
+  "/recommendation-system-development-services/",
+  "/salesforce-ai-consulting/",
+  "/salesforce-cloud-services/",
+  "/salesforce-commerce-cloud-services/",
+  "/salesforce-consulting-services/",
+  "/salesforce-data-cloud-services/",
+  "/salesforce-development-services/",
+  "/salesforce-experience-cloud-services/",
+  "/salesforce-implementation-services/",
+  "/salesforce-integration-services/",
+  "/salesforce-migration-services/",
+  "/salesforce-revenue-cloud-advanced/",
+  "/salesforce-revenue-cloud-services/",
+  "/salesforce-sales-cloud-services/",
+  "/semiconductor/",
+  "/sharepoint-consulting-services/",
+  "/simple-reflex-ai-agents/",
+  "/sitecore-implementation/",
+  "/sitecore-managed-services/",
+  "/snowflake-consulting-services/",
+  "/solutions/",
+  "/supply-chain-automation-solution/",
+  "/supply-chain-bot-development/",
+  "/supply-chain/",
+  "/surface-defect-detection/",
+  "/tableau-consulting-services/",
+  "/vision-based-eol-detection/",
+  "/wafer-defect-detection/",
+  "/web-application-development/",
+  "/wordpress-development-services/"
+];
 
 // ------------------ FETCH SITEMAP ------------------
 async function fetchSitemap() {
@@ -147,21 +279,45 @@ function runBackstopBatch(scenarios, batchIndex) {
 
     config.scenarios = scenarios;
 
+    // Log every URL being tested so frontend console shows them
+    console.log(`\n📋 Batch ${batchIndex + 1} URLs:`);
+    scenarios.forEach((s, i) => {
+      console.log(`  ${i + 1}. 🌐 TESTING_URL: ${s.url}`);
+    });
+    console.log('');
+
     fs.writeFileSync('backstop.json', JSON.stringify(config, null, 2));
 
     console.log(`Running batch ${batchIndex + 1}`);
     console.log(`BATCH_START:${batchIndex + 1}`);
 
-    exec(`backstop ${mode}`, (err, stdout, stderr) => {
-      console.log(stdout);
-      console.error(stderr);
+    // Use spawn instead of exec for real-time stdout streaming
+    // exec buffers all output until process exits — SCENARIO > lines arrive too late
+    // spawn streams line by line so progress bar updates as each scenario runs
+    const backstop = spawn('backstop', [mode], {
+      shell: true,
+      cwd: process.cwd()
+    });
 
-      if (err) {
+    backstop.stdout.on('data', (data) => {
+      process.stdout.write(data);
+    });
+
+    backstop.stderr.on('data', (data) => {
+      process.stderr.write(data);
+    });
+
+    backstop.on('close', (code) => {
+      if (code !== 0) {
         console.log(`⚠️ Batch ${batchIndex + 1} completed with differences`);
       } else {
         console.log(`✅ Batch ${batchIndex + 1} completed`);
       }
+      resolve();
+    });
 
+    backstop.on('error', (err) => {
+      console.error(`❌ Backstop spawn error: ${err.message}`);
       resolve();
     });
   });
