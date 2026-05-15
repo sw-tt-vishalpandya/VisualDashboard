@@ -45,7 +45,7 @@ function sendLog(message) {
   });
 }
 
-// ---------------- RUN TEST ----------------
+// ================ RUN TEST (with integrated cleanup) ================
 app.post('/run-test', (req, res) => {
   const mode = req.body.mode || 'test';
   const parallel = true;
@@ -62,6 +62,11 @@ app.post('/run-test', (req, res) => {
     console.log('⚠️ No valid viewports, using default');
     viewports = [{ label: 'desktop', width: 1366, height: 768 }];
   }
+
+  // ===== CLEANUP BEFORE EXECUTION =====
+  console.log(`🧹 Cleaning up old ${mode} data...`);
+  cleanupBatchData(mode);
+  sendLog(`🧹 Cleaned up old ${mode} data`);
 
   const configPath = path.join(__dirname, 'backstop.json');
   const config = JSON.parse(fs.readFileSync(configPath));
@@ -128,7 +133,70 @@ app.post('/terminate', (req, res) => {
   res.json({ message: `${mode} stopped` });
 });
 
-// ---------------- DELETE BACKSTOP DATA ----------------
+// ================ CLEANUP HELPER ================
+function cleanupBatchData(mode) {
+  const basePath = path.join(__dirname, 'backstop_data');
+  const batchDirPattern = /^batch_\d+$/;
+  
+  try {
+    if (mode === 'reference') {
+      // A fresh baseline owns the dynamic batch folders, so remove only generated batch_N folders.
+      const batchDirs = fs.existsSync(basePath)
+        ? fs.readdirSync(basePath).filter(f => batchDirPattern.test(f))
+        : [];
+
+      batchDirs.forEach(batchDir => {
+        const batchPath = path.join(basePath, batchDir);
+        fs.rmSync(batchPath, { recursive: true, force: true });
+        console.log(`✅ Cleaned: ${batchDir}/`);
+      });
+
+      // Remove stale generated batch configs so the next baseline has only current batches.
+      fs.readdirSync(__dirname)
+        .filter(file => /^backstop_batch_\d+\.json$/.test(file))
+        .forEach(file => {
+          fs.rmSync(path.join(__dirname, file), { force: true });
+          console.log(`✅ Cleaned: ${file}`);
+        });
+
+      // Also clear legacy root Backstop folders when present.
+      const refPath = path.join(basePath, 'bitmaps_reference');
+      const testPath = path.join(basePath, 'bitmaps_test');
+
+      if (fs.existsSync(refPath)) {
+        fs.rmSync(refPath, { recursive: true, force: true });
+        console.log('✅ Cleaned: bitmaps_reference/');
+      }
+      if (fs.existsSync(testPath)) {
+        fs.rmSync(testPath, { recursive: true, force: true });
+        console.log('✅ Cleaned: bitmaps_test/');
+      }
+    } else if (mode === 'test') {
+      // Clean test phase data only; preserve references and generated batch metadata/configs.
+      const testPath = path.join(basePath, 'bitmaps_test');
+      if (fs.existsSync(testPath)) {
+        fs.rmSync(testPath, { recursive: true, force: true });
+        console.log('✅ Cleaned: bitmaps_test/');
+      }
+      
+      const batchDirs = fs.existsSync(basePath)
+        ? fs.readdirSync(basePath).filter(f => batchDirPattern.test(f))
+        : [];
+
+      batchDirs.forEach(batchDir => {
+        const batchTestPath = path.join(basePath, batchDir, 'bitmaps_test');
+        if (fs.existsSync(batchTestPath)) {
+          fs.rmSync(batchTestPath, { recursive: true, force: true });
+          console.log(`✅ Cleaned: ${batchDir}/bitmaps_test/`);
+        }
+      });
+    }
+  } catch (err) {
+    console.error(`❌ Cleanup error (${mode}):`, err.message);
+  }
+}
+
+// ================ DELETE BACKSTOP DATA (DEPRECATED - kept for backward compatibility) ================
 app.post('/delete-data', (req, res) => {
   const { type } = req.body;
   const basePath = path.join(__dirname, 'backstop_data');

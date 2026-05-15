@@ -1,0 +1,544 @@
+{
+  "id": "backstop_default",
+  "viewports": [
+    {
+      "label": "phone",
+      "width": 375,
+      "height": 667
+    },
+    {
+      "label": "tablet",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "label": "desktop",
+      "width": 1366,
+      "height": 768
+    }
+  ],
+  "onBeforeScript": "puppet/onBefore.js",
+  "onReadyScript": "puppet/onReady.js",
+  "scenarios": [
+    {
+      "label": "home_Full_Page",
+      "url": "https://www.softwebsolutions.com/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "about-softweb-solutions_Full_Page",
+      "url": "https://www.softwebsolutions.com/about-softweb-solutions/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "adaptive-ai-development-company_Full_Page",
+      "url": "https://www.softwebsolutions.com/adaptive-ai-development-company/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "agentforce-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/agentforce-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "agentic-ai-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/agentic-ai-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "ai-agent-development-company_Full_Page",
+      "url": "https://www.softwebsolutions.com/ai-agent-development-company/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "ai-anomaly-detection_Full_Page",
+      "url": "https://www.softwebsolutions.com/ai-anomaly-detection/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "ai-automation-testing-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/ai-automation-testing-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "ai-chatbot-development-company_Full_Page",
+      "url": "https://www.softwebsolutions.com/ai-chatbot-development-company/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "ai-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/ai-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "ai-defect-detection-visual-inspection_Full_Page",
+      "url": "https://www.softwebsolutions.com/ai-defect-detection-visual-inspection/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "ai-development-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/ai-development-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "ai-powered-inventory-management_Full_Page",
+      "url": "https://www.softwebsolutions.com/ai-powered-inventory-management/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "ai-prompt-engineering-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/ai-prompt-engineering-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "aiops-solutions_Full_Page",
+      "url": "https://www.softwebsolutions.com/aiops-solutions/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "application-managed-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/application-managed-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "automated-data-capture-solutions_Full_Page",
+      "url": "https://www.softwebsolutions.com/automated-data-capture-solutions/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "automated-quality-control-inspection-with-ai_Full_Page",
+      "url": "https://www.softwebsolutions.com/automated-quality-control-inspection-with-ai/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "autonomous-ai-agents-development_Full_Page",
+      "url": "https://www.softwebsolutions.com/autonomous-ai-agents-development/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "aws-cloud-migration-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/aws-cloud-migration-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "aws-data-analytics-consulting_Full_Page",
+      "url": "https://www.softwebsolutions.com/aws-data-analytics-consulting/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "aws-sagemaker-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/aws-sagemaker-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "aws-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/aws-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "azure-ai-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/azure-ai-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "azure-cloud-service_Full_Page",
+      "url": "https://www.softwebsolutions.com/azure-cloud-service/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "azure-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/azure-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "azure-data-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/azure-data-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "azure-devops-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/azure-devops-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "big-data-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/big-data-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "business-intelligence-consulting_Full_Page",
+      "url": "https://www.softwebsolutions.com/business-intelligence-consulting/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "business-process-automation-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/business-process-automation-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "client-testimonial_Full_Page",
+      "url": "https://www.softwebsolutions.com/client-testimonial/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "cloud-application-development-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/cloud-application-development-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "cloud-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/cloud-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "cloud-managed-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/cloud-managed-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "cloud-migration-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/cloud-migration-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "cloud-transformation-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/cloud-transformation-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "computer-vision_Full_Page",
+      "url": "https://www.softwebsolutions.com/computer-vision/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "custom-net-development-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/custom-net-development-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "custom-software-development_Full_Page",
+      "url": "https://www.softwebsolutions.com/custom-software-development/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "customer-care-bot-development_Full_Page",
+      "url": "https://www.softwebsolutions.com/customer-care-bot-development/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "customer-data-platform_Full_Page",
+      "url": "https://www.softwebsolutions.com/customer-data-platform/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "dashboard-development-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/dashboard-development-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "data-analytics-banking-dashboard_Full_Page",
+      "url": "https://www.softwebsolutions.com/data-analytics-banking-dashboard/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "data-analytics-finance-dashboard_Full_Page",
+      "url": "https://www.softwebsolutions.com/data-analytics-finance-dashboard/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "data-analytics-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/data-analytics-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "data-engineering-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/data-engineering-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "data-governance-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/data-governance-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "data-integration-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/data-integration-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "data-managed-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/data-managed-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    }
+  ],
+  "paths": {
+    "bitmaps_reference": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\batch_1\\bitmaps_reference",
+    "bitmaps_test": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\batch_1\\bitmaps_test",
+    "engine_scripts": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\engine_scripts",
+    "html_report": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\batch_1\\html_report",
+    "ci_report": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\batch_1\\ci_report"
+  },
+  "report": [
+    "CI"
+  ],
+  "engine": "puppeteer",
+  "engineOptions": {
+    "args": [
+      "--no-sandbox"
+    ]
+  },
+  "asyncCaptureLimit": 5,
+  "asyncCompareLimit": 50,
+  "debug": false,
+  "debugWindow": false
+}
