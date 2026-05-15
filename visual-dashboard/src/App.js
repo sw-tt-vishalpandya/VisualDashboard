@@ -241,14 +241,6 @@ import React, { useEffect, useState, useRef } from 'react';
 
     const selectedCount = viewports.filter(v => v.enabled).length;
 
-    // ---------------- DELETE DIALOG ----------------
-    const [confirmDialog, setConfirmDialog] = useState({
-      open: false,
-      type: '',
-      mode: 'confirm',
-      message: ''
-    });
-
     // ---------------- DYNAMIC CONFIG ----------------
     // Total scenarios = pages.length × scenarios-per-page × viewports selected
     // Loaded dynamically from backstop.json
@@ -512,44 +504,6 @@ import React, { useEffect, useState, useRef } from 'react';
       setDeviceError('');
     };
 
-    // ---------------- DELETE ----------------
-    const deleteData = (type) => {
-      setConfirmDialog({ open: true, type, mode: 'confirm', message: '' });
-    };
-
-    const handleDeleteConfirm = async () => {
-      try {
-        const res = await axios.post('http://localhost:3001/delete-data', {
-          type: confirmDialog.type
-        });
-
-        if (res.data.status === 'success') {
-          setConfirmDialog({
-            open: true, type: confirmDialog.type, mode: 'success',
-            message: confirmDialog.type === 'reference'
-              ? 'Reference data deleted successfully'
-              : 'Test data deleted successfully'
-          });
-        } else {
-          setConfirmDialog({
-            open: true, type: confirmDialog.type, mode: 'warning',
-            message: confirmDialog.type === 'reference'
-              ? 'Reference folder not found. Run Baseline first.'
-              : 'Test folder not found. Run Test first.'
-          });
-        }
-      } catch {
-        setConfirmDialog({
-          open: true, type: confirmDialog.type, mode: 'warning',
-          message: 'Delete failed'
-        });
-      }
-    };
-
-    const closeDialog = () => {
-      setConfirmDialog({ open: false, type: '', mode: 'confirm', message: '' });
-    };
-
     // ---------------- RESTART STATUS LABEL ----------------
     const restartLabel = (status, name) => {
       if (status === 'restarting') return { text: `⏳ Restarting ${name}...`, color: '#ff9800' };
@@ -755,12 +709,6 @@ import React, { useEffect, useState, useRef } from 'react';
                 >
                   🚀 Run Baseline
                 </button>
-                <button
-                  onClick={() => deleteData('reference')}
-                  style={{ ...styles.button, ...styles.buttonDanger }}
-                >
-                  🗑️ Delete Baseline
-                </button>
               </div>
               {activeAction === 'reference' && (
                 <div style={{...styles.statusBadge, ...styles.statusRunning}}>⏳ Running Baseline...</div>
@@ -799,16 +747,10 @@ import React, { useEffect, useState, useRef } from 'react';
                   🚀 Run Test
                 </button>
                 <button
-                  onClick={() => window.open('http://localhost:3001/report/html_report/index.html')}
+                  onClick={() => window.open('http://localhost:3001/report/html_report/Visual-Report.html')}
                   style={{ ...styles.button, ...styles.buttonSecondary }}
                 >
                   📋 View Report
-                </button>
-                <button
-                  onClick={() => deleteData('test')}
-                  style={{ ...styles.button, ...styles.buttonDanger }}
-                >
-                  🗑️ Delete Test
                 </button>
               </div>
               {activeAction === 'test' && (
@@ -961,81 +903,6 @@ import React, { useEffect, useState, useRef } from 'react';
           </div>
         )}
 
-        {/* DELETE CONFIRMATION DIALOG */}
-        {confirmDialog.open && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}>
-            <div style={{
-              backgroundColor: '#fff',
-              padding: '30px',
-              borderRadius: '8px',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-              maxWidth: '400px',
-              width: '90%'
-            }}>
-              {confirmDialog.mode === 'confirm' ? (
-                <>
-                  <h3 style={{ marginTop: 0, marginBottom: '15px', color: '#333' }}>
-                    ⚠️ Confirm Delete
-                  </h3>
-                  <p style={{ marginBottom: '20px', color: '#666' }}>
-                    Delete {confirmDialog.type} data? This cannot be undone.
-                  </p>
-                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                    <button
-                      onClick={closeDialog}
-                      style={{
-                        ...styles.button,
-                        backgroundColor: '#ddd',
-                        color: '#333'
-                      }}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleDeleteConfirm}
-                      style={{
-                        ...styles.button,
-                        ...styles.buttonDanger
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <h3 style={{ marginTop: 0, marginBottom: '15px', color: '#333' }}>
-                    {confirmDialog.mode === 'success' ? '✅ Success' : '⚠️ Notice'}
-                  </h3>
-                  <p style={{ marginBottom: '20px', color: '#666' }}>
-                    {confirmDialog.message}
-                  </p>
-                  <button
-                    onClick={closeDialog}
-                    style={{
-                      ...styles.button,
-                      ...styles.buttonPrimary,
-                      width: '100%'
-                    }}
-                  >
-                    OK
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     );
   }

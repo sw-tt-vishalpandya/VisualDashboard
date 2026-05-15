@@ -1,0 +1,544 @@
+{
+  "id": "backstop_default",
+  "viewports": [
+    {
+      "label": "phone",
+      "width": 375,
+      "height": 667
+    },
+    {
+      "label": "tablet",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "label": "desktop",
+      "width": 1366,
+      "height": 768
+    }
+  ],
+  "onBeforeScript": "puppet/onBefore.js",
+  "onReadyScript": "puppet/onReady.js",
+  "scenarios": [
+    {
+      "label": "data-migration-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/data-migration-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "data-pipeline-automation-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/data-pipeline-automation-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "data-science-development_Full_Page",
+      "url": "https://www.softwebsolutions.com/data-science-development/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "data-visualization-consulting_Full_Page",
+      "url": "https://www.softwebsolutions.com/data-visualization-consulting/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "databricks-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/databricks-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "decision-intelligence-system_Full_Page",
+      "url": "https://www.softwebsolutions.com/decision-intelligence-system/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "deep-learning-solutions_Full_Page",
+      "url": "https://www.softwebsolutions.com/deep-learning-solutions/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "defect-detection-in-packaging_Full_Page",
+      "url": "https://www.softwebsolutions.com/defect-detection-in-packaging/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "devops-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/devops-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "digital-process-automation-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/digital-process-automation-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "digital-supply-chain-solutions_Full_Page",
+      "url": "https://www.softwebsolutions.com/digital-supply-chain-solutions/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "digital-supply-chain_Full_Page",
+      "url": "https://www.softwebsolutions.com/digital-supply-chain/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "digital-transformation-consulting_Full_Page",
+      "url": "https://www.softwebsolutions.com/digital-transformation-consulting/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "edge-ai-solutions_Full_Page",
+      "url": "https://www.softwebsolutions.com/edge-ai-solutions/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "enterprise-app-development_Full_Page",
+      "url": "https://www.softwebsolutions.com/enterprise-app-development/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "enterprise-data-management-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/enterprise-data-management-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "enterprise-data-warehouse_Full_Page",
+      "url": "https://www.softwebsolutions.com/enterprise-data-warehouse/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "fabric-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/fabric-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "face-recognition-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/face-recognition-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "finance-industry_Full_Page",
+      "url": "https://www.softwebsolutions.com/finance-industry/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "flutter-app-development-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/flutter-app-development-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "front-end-development_Full_Page",
+      "url": "https://www.softwebsolutions.com/front-end-development/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "full-stack-development-company_Full_Page",
+      "url": "https://www.softwebsolutions.com/full-stack-development-company/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "generative-ai-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/generative-ai-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "hybrid-cloud-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/hybrid-cloud-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "image-annotation-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/image-annotation-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "image-processing-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/image-processing-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "industries_Full_Page",
+      "url": "https://www.softwebsolutions.com/industries/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "intelligent-automation-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/intelligent-automation-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "intelligent-document-processing-solutions_Full_Page",
+      "url": "https://www.softwebsolutions.com/intelligent-document-processing-solutions/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "intelligent-forecasting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/intelligent-forecasting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "intelligent-video-analytics-solutions_Full_Page",
+      "url": "https://www.softwebsolutions.com/intelligent-video-analytics-solutions/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "intelligent-virtual-assistant_Full_Page",
+      "url": "https://www.softwebsolutions.com/intelligent-virtual-assistant/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "inventory-analytics-dashboards_Full_Page",
+      "url": "https://www.softwebsolutions.com/inventory-analytics-dashboards/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "large-language-model-development_Full_Page",
+      "url": "https://www.softwebsolutions.com/large-language-model-development/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "legacy-application-modernization_Full_Page",
+      "url": "https://www.softwebsolutions.com/legacy-application-modernization/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "llmops-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/llmops-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "machine-learning-consulting_Full_Page",
+      "url": "https://www.softwebsolutions.com/machine-learning-consulting/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "machine-learning-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/machine-learning-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "machine-monitoring-system_Full_Page",
+      "url": "https://www.softwebsolutions.com/machine-monitoring-system/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "managed-services-provider_Full_Page",
+      "url": "https://www.softwebsolutions.com/managed-services-provider/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "manufacturing-industry_Full_Page",
+      "url": "https://www.softwebsolutions.com/manufacturing-industry/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "microservices_Full_Page",
+      "url": "https://www.softwebsolutions.com/microservices/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "microsoft-365-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/microsoft-365-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "microsoft-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/microsoft-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "microsoft-copilot-studio-consulting_Full_Page",
+      "url": "https://www.softwebsolutions.com/microsoft-copilot-studio-consulting/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "microsoft-hololens-app-development-company_Full_Page",
+      "url": "https://www.softwebsolutions.com/microsoft-hololens-app-development-company/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "microsoft-viva-consulting_Full_Page",
+      "url": "https://www.softwebsolutions.com/microsoft-viva-consulting/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "mlops-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/mlops-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "mobile-app-development_Full_Page",
+      "url": "https://www.softwebsolutions.com/mobile-app-development/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    }
+  ],
+  "paths": {
+    "bitmaps_reference": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\batch_2\\bitmaps_reference",
+    "bitmaps_test": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\batch_2\\bitmaps_test",
+    "engine_scripts": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\engine_scripts",
+    "html_report": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\batch_2\\html_report",
+    "ci_report": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\batch_2\\ci_report"
+  },
+  "report": [
+    "CI"
+  ],
+  "engine": "puppeteer",
+  "engineOptions": {
+    "args": [
+      "--no-sandbox"
+    ]
+  },
+  "asyncCaptureLimit": 5,
+  "asyncCompareLimit": 50,
+  "debug": false,
+  "debugWindow": false
+}

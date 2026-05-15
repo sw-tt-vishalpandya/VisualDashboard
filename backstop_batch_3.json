@@ -1,0 +1,544 @@
+{
+  "id": "backstop_default",
+  "viewports": [
+    {
+      "label": "phone",
+      "width": 375,
+      "height": 667
+    },
+    {
+      "label": "tablet",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "label": "desktop",
+      "width": 1366,
+      "height": 768
+    }
+  ],
+  "onBeforeScript": "puppet/onBefore.js",
+  "onReadyScript": "puppet/onReady.js",
+  "scenarios": [
+    {
+      "label": "mulesoft-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/mulesoft-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "multicloud-managed-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/multicloud-managed-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "natural-language-processing-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/natural-language-processing-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "net-maui-development-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/net-maui-development-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "nodejs-application-development_Full_Page",
+      "url": "https://www.softwebsolutions.com/nodejs-application-development/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "partner-relationship-management_Full_Page",
+      "url": "https://www.softwebsolutions.com/partner-relationship-management/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "power-automate-consulting_Full_Page",
+      "url": "https://www.softwebsolutions.com/power-automate-consulting/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "power-bi-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/power-bi-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "power-bi-oee-dashboards_Full_Page",
+      "url": "https://www.softwebsolutions.com/power-bi-oee-dashboards/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "power-platform-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/power-platform-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "powerapps-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/powerapps-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "predictive-analytics-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/predictive-analytics-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "product-engineering-service_Full_Page",
+      "url": "https://www.softwebsolutions.com/product-engineering-service/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "product-information-management-system_Full_Page",
+      "url": "https://www.softwebsolutions.com/product-information-management-system/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "production-line-monitoring-solution_Full_Page",
+      "url": "https://www.softwebsolutions.com/production-line-monitoring-solution/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "python-development-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/python-development-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "quality-inspection-in-manufacturing_Full_Page",
+      "url": "https://www.softwebsolutions.com/quality-inspection-in-manufacturing/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "rag-as-a-service_Full_Page",
+      "url": "https://www.softwebsolutions.com/rag-as-a-service/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "react-native-app-development-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/react-native-app-development-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "reactjs-development-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/reactjs-development-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "recommendation-system-development-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/recommendation-system-development-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "salesforce-ai-consulting_Full_Page",
+      "url": "https://www.softwebsolutions.com/salesforce-ai-consulting/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "salesforce-cloud-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/salesforce-cloud-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "salesforce-commerce-cloud-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/salesforce-commerce-cloud-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "salesforce-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/salesforce-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "salesforce-data-cloud-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/salesforce-data-cloud-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "salesforce-development-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/salesforce-development-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "salesforce-experience-cloud-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/salesforce-experience-cloud-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "salesforce-implementation-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/salesforce-implementation-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "salesforce-integration-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/salesforce-integration-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "salesforce-migration-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/salesforce-migration-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "salesforce-revenue-cloud-advanced_Full_Page",
+      "url": "https://www.softwebsolutions.com/salesforce-revenue-cloud-advanced/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "salesforce-revenue-cloud-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/salesforce-revenue-cloud-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "salesforce-sales-cloud-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/salesforce-sales-cloud-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "semiconductor_Full_Page",
+      "url": "https://www.softwebsolutions.com/semiconductor/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "sharepoint-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/sharepoint-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "simple-reflex-ai-agents_Full_Page",
+      "url": "https://www.softwebsolutions.com/simple-reflex-ai-agents/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "sitecore-implementation_Full_Page",
+      "url": "https://www.softwebsolutions.com/sitecore-implementation/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "sitecore-managed-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/sitecore-managed-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "snowflake-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/snowflake-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "solutions_Full_Page",
+      "url": "https://www.softwebsolutions.com/solutions/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "supply-chain-automation-solution_Full_Page",
+      "url": "https://www.softwebsolutions.com/supply-chain-automation-solution/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "supply-chain-bot-development_Full_Page",
+      "url": "https://www.softwebsolutions.com/supply-chain-bot-development/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "supply-chain_Full_Page",
+      "url": "https://www.softwebsolutions.com/supply-chain/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "surface-defect-detection_Full_Page",
+      "url": "https://www.softwebsolutions.com/surface-defect-detection/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "tableau-consulting-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/tableau-consulting-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "vision-based-eol-detection_Full_Page",
+      "url": "https://www.softwebsolutions.com/vision-based-eol-detection/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "wafer-defect-detection_Full_Page",
+      "url": "https://www.softwebsolutions.com/wafer-defect-detection/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "web-application-development_Full_Page",
+      "url": "https://www.softwebsolutions.com/web-application-development/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    },
+    {
+      "label": "wordpress-development-services_Full_Page",
+      "url": "https://www.softwebsolutions.com/wordpress-development-services/",
+      "delay": 15000,
+      "selectors": [
+        "document"
+      ],
+      "misMatchThreshold": 0.1,
+      "requireSameDimensions": true
+    }
+  ],
+  "paths": {
+    "bitmaps_reference": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\batch_3\\bitmaps_reference",
+    "bitmaps_test": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\batch_3\\bitmaps_test",
+    "engine_scripts": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\engine_scripts",
+    "html_report": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\batch_3\\html_report",
+    "ci_report": "C:\\SW-VishalPandyaData\\Vishal-Data\\WFH\\VisualDashboard\\backstop_data\\batch_3\\ci_report"
+  },
+  "report": [
+    "CI"
+  ],
+  "engine": "puppeteer",
+  "engineOptions": {
+    "args": [
+      "--no-sandbox"
+    ]
+  },
+  "asyncCaptureLimit": 5,
+  "asyncCompareLimit": 50,
+  "debug": false,
+  "debugWindow": false
+}
