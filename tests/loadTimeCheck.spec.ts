@@ -16,7 +16,9 @@ fs.mkdirSync(reportsDir, { recursive: true });
 const outputFilePath = path.join(reportsDir, `page-load-results-${process.pid}.json`);
 const workbook = XLSX.readFile(inputFilePath);
 const sheet = workbook.Sheets[workbook.SheetNames[0]];
-const urlList = XLSX.utils.sheet_to_json(sheet) as { URL: string }[];
+const urlList = (XLSX.utils.sheet_to_json(sheet) as { URL?: string; URLs?: string }[])
+	.map((row) => ({ URL: row.URLs || row.URL || "" }))
+	.filter((row) => row.URL);
 const results: any[] = [];
 
 // Emit total count for progress bar

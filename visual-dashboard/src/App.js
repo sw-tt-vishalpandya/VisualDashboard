@@ -215,6 +215,10 @@ import React, { useEffect, useState, useRef } from 'react';
     const [visualStatus, setVisualStatus] = useState('');
     const [baselineCompleted, setBaselineCompleted] = useState(false);
     const [testCompleted, setTestCompleted] = useState(false);
+    const [visualUrlFile, setVisualUrlFile] = useState(null);
+    const [visualUploadStatus, setVisualUploadStatus] = useState('');
+    const [visualUploadError, setVisualUploadError] = useState('');
+    const [visualUrlCount, setVisualUrlCount] = useState(0);
 
     // ---------------- PAGE ----------------
     const [pageLogs, setPageLogs] = useState([]);
@@ -241,11 +245,7 @@ import React, { useEffect, useState, useRef } from 'react';
 
     const selectedCount = viewports.filter(v => v.enabled).length;
 
-    // ---------------- DYNAMIC CONFIG ----------------
-    // Total scenarios = pages.length × scenarios-per-page × viewports selected
-    // Loaded dynamically from backstop.json
-    const [PAGES_COUNT, setPagesCount] = useState(150);
-    const [SCENARIOS_PER_PAGE, setScenariosPerPage] = useState(1);
+    const [expectedVisualScenarios, setExpectedVisualScenarios] = useState(0);
 
     // ---------------- AUTO SCROLL ----------------
     useEffect(() => {
@@ -256,29 +256,23 @@ import React, { useEffect, useState, useRef } from 'react';
       pageLogsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [pageLogs]);
 
-    // ---------------- LOAD DYNAMIC CONFIG FROM BACKSTOP.JSON ----------------
     useEffect(() => {
-      const loadConfig = async () => {
+      const loadVisualUrlStatus = async () => {
         try {
-          const response = await fetch('/backstop.json');
-          const config = await response.json();
-          
-          // Get page count from scenarios array
-          const scenariosCount = config.scenarios?.length || 150;
-          setPagesCount(scenariosCount);
-          
-          // Get scenarios per page from viewports array
-          const viewportsCount = config.viewports?.length || 1;
-          setScenariosPerPage(viewportsCount);
+          const response = await axios.get('http://localhost:3001/visual-urls/status');
+          setVisualUrlCount(response.data.count || 0);
+          setVisualUploadStatus(`Ready: ${response.data.count || 0} URL(s) loaded from /tests/PriorityPagesList.xlsx`);
+          setVisualUploadError('');
         } catch (error) {
-          console.error('Error loading backstop.json:', error);
-          // Fall back to defaults if fetch fails
-          setPagesCount(150);
-          setScenariosPerPage(1);
+          setVisualUrlCount(0);
+          setVisualUploadStatus('');
+          if (error.response?.data) {
+            setVisualUploadError(formatVisualValidationError(error.response.data));
+          }
         }
       };
-      
-      loadConfig();
+
+      loadVisualUrlStatus();
     }, []);
 
     // ---------------- SSE ----------------
@@ -292,11 +286,18 @@ import React, { useEffect, useState, useRef } from 'react';
         if (currentMode === 'reference' || currentMode === 'test') {
           setVisualLogs(prev => [...prev, message]);
 
+          if (message.startsWith('TOTAL_SCENARIOS:')) {
+            const total = Number(message.split(':')[1]);
+            if (!Number.isNaN(total) && total > 0) {
+              setExpectedVisualScenarios(total);
+            }
+          }
+
           if (visualCompletedRef.current) return;
 
           if (message.includes('SCENARIO >')) {
             visualProcessedRef.current += 1;
-            const totalScenarios = PAGES_COUNT * SCENARIOS_PER_PAGE * selectedCount;
+            const totalScenarios = expectedVisualScenarios || Math.max(visualUrlCount * selectedCount, 1);
             const newProgress = Math.min(
               5 + Math.round((visualProcessedRef.current / totalScenarios) * 90),
               95
@@ -354,14 +355,75 @@ import React, { useEffect, useState, useRef } from 'react';
       };
 
       return () => eventSource.close();
-    }, [currentMode, selectedCount]);
+    }, [currentMode, selectedCount, expectedVisualScenarios, visualUrlCount]);
+
+    const formatVisualValidationError = (data) => {
+      if (!data) return 'Upload failed. Please try again.';
+      if (data.errors?.length) return data.errors.join(' ');
+      return data.error || 'Upload failed. Please try again.';
+    };
+
+    const fileToBase64 = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const handleVisualFileChange = (event) => {
+      const file = event.target.files?.[0] || null;
+      setVisualUrlFile(file);
+      setVisualUploadStatus('');
+      setVisualUploadError('');
+
+      if (file && !file.name.toLowerCase().endsWith('.xlsx')) {
+        setVisualUploadError('Only .xlsx files are allowed.');
+      }
+    };
+
+    const uploadVisualUrlFile = async () => {
+      if (!visualUrlFile) {
+        setVisualUploadError('Choose a .xlsx file before uploading.');
+        return;
+      }
+
+      if (!visualUrlFile.name.toLowerCase().endsWith('.xlsx')) {
+        setVisualUploadError('Only .xlsx files are allowed.');
+        return;
+      }
+
+      setVisualUploadError('');
+      setVisualUploadStatus('Uploading and validating...');
+
+      try {
+        const fileData = await fileToBase64(visualUrlFile);
+        const response = await axios.post('http://localhost:3001/upload-visual-urls', {
+          fileName: visualUrlFile.name,
+          fileData
+        });
+
+        const count = response.data.count || 0;
+        setVisualUrlCount(count);
+        setExpectedVisualScenarios(0);
+        setVisualUploadStatus(response.data.message || `Uploaded ${count} URL(s).`);
+      } catch (error) {
+        setVisualUrlCount(0);
+        setVisualUploadStatus('');
+        setVisualUploadError(formatVisualValidationError(error.response?.data));
+      }
+    };
 
     // ---------------- RUN VISUAL ----------------
     const runTest = async (mode) => {
       if (selectedCount === 0) return;
+      if (visualUrlCount === 0) {
+        setVisualUploadError('Upload a valid .xlsx file before running Visual Testing.');
+        return;
+      }
 
       visualCompletedRef.current = false;
       visualProcessedRef.current = 0;
+      setExpectedVisualScenarios(0);
 
       setActiveAction(mode);
       setVisualLogs([]);
@@ -372,10 +434,16 @@ import React, { useEffect, useState, useRef } from 'react';
       setTestCompleted(false);
       setCurrentMode(mode);
 
-      await axios.post('http://localhost:3001/run-test', {
-        mode,
-        viewports: viewports.filter(v => v.enabled)
-      });
+      try {
+        await axios.post('http://localhost:3001/run-test', {
+          mode,
+          viewports: viewports.filter(v => v.enabled)
+        });
+      } catch (error) {
+        setActiveAction('');
+        setCurrentMode('');
+        setVisualUploadError(formatVisualValidationError(error.response?.data));
+      }
     };
 
     // ---------------- RUN PAGE ----------------
@@ -551,6 +619,46 @@ import React, { useEffect, useState, useRef } from 'react';
           <div style={styles.section}>
             <div style={styles.sectionTitle}>📊 Visual Testing Module</div>
 
+            {/* URL UPLOAD */}
+            <div style={styles.card}>
+              <div style={styles.label}>Upload Visual Testing URLs (.xlsx)</div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <input
+                  type="file"
+                  accept=".xlsx"
+                  onChange={handleVisualFileChange}
+                  disabled={activeAction === 'reference' || activeAction === 'test'}
+                  style={{
+                    ...styles.selectDropdown,
+                    minWidth: '260px',
+                    borderColor: visualUploadError ? '#f44336' : '#ddd'
+                  }}
+                />
+                <button
+                  onClick={uploadVisualUrlFile}
+                  disabled={!visualUrlFile || activeAction === 'reference' || activeAction === 'test'}
+                  style={{
+                    ...styles.button,
+                    ...styles.buttonSecondary,
+                    opacity: (!visualUrlFile || activeAction === 'reference' || activeAction === 'test') ? 0.6 : 1,
+                    cursor: (!visualUrlFile || activeAction === 'reference' || activeAction === 'test') ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  Upload File
+                </button>
+              </div>
+              {visualUploadStatus && (
+                <div style={{ ...styles.statusBadge, ...styles.statusPass }}>
+                  {visualUploadStatus}
+                </div>
+              )}
+              {visualUploadError && (
+                <div style={{ ...styles.statusBadge, ...styles.statusFail, whiteSpace: 'normal', lineHeight: '1.4' }}>
+                  {visualUploadError}
+                </div>
+              )}
+            </div>
+
             {/* DEVICE SELECTION */}
             <div style={styles.card}>
               <div style={styles.label}>📱 Select Devices ({selectedCount}/{viewports.length}) - Max 5</div>
@@ -699,12 +807,12 @@ import React, { useEffect, useState, useRef } from 'react';
               <div style={{ marginBottom: '10px' }}>
                 <button
                   onClick={() => runTest('reference')}
-                  disabled={selectedCount === 0 || activeAction === 'reference' || activeAction === 'test'}
+                  disabled={selectedCount === 0 || visualUrlCount === 0 || activeAction === 'reference' || activeAction === 'test'}
                   style={{
                     ...styles.button,
                     ...styles.buttonPrimary,
-                    opacity: (selectedCount === 0 || activeAction === 'reference' || activeAction === 'test') ? 0.6 : 1,
-                    cursor: (selectedCount === 0 || activeAction === 'reference' || activeAction === 'test') ? 'not-allowed' : 'pointer'
+                    opacity: (selectedCount === 0 || visualUrlCount === 0 || activeAction === 'reference' || activeAction === 'test') ? 0.6 : 1,
+                    cursor: (selectedCount === 0 || visualUrlCount === 0 || activeAction === 'reference' || activeAction === 'test') ? 'not-allowed' : 'pointer'
                   }}
                 >
                   🚀 Run Baseline
@@ -736,12 +844,12 @@ import React, { useEffect, useState, useRef } from 'react';
               <div style={{ marginBottom: '10px' }}>
                 <button
                   onClick={() => runTest('test')}
-                  disabled={selectedCount === 0 || activeAction === 'reference' || activeAction === 'test'}
+                  disabled={selectedCount === 0 || visualUrlCount === 0 || activeAction === 'reference' || activeAction === 'test'}
                   style={{
                     ...styles.button,
                     ...styles.buttonPrimary,
-                    opacity: (selectedCount === 0 || activeAction === 'reference' || activeAction === 'test') ? 0.6 : 1,
-                    cursor: (selectedCount === 0 || activeAction === 'reference' || activeAction === 'test') ? 'not-allowed' : 'pointer'
+                    opacity: (selectedCount === 0 || visualUrlCount === 0 || activeAction === 'reference' || activeAction === 'test') ? 0.6 : 1,
+                    cursor: (selectedCount === 0 || visualUrlCount === 0 || activeAction === 'reference' || activeAction === 'test') ? 'not-allowed' : 'pointer'
                   }}
                 >
                   🚀 Run Test
@@ -908,3 +1016,4 @@ import React, { useEffect, useState, useRef } from 'react';
   }
 
   export default App;
+
