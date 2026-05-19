@@ -20,6 +20,8 @@ app.use(express.json({ limit: '10mb' }));
 
 const PORT = 3001;
 const visualUrlsFilePath = path.join(__dirname, 'tests', 'PriorityPagesList.xlsx');
+const pageVerificationUrlsFilePath = path.join(__dirname, 'tests', 'PageVerificationUrls.xlsx');
+const baselineRunFilePath = path.join(__dirname, 'history.json');
 
 // ---------------- HEALTH ----------------
 app.get('/', (req, res) => {
@@ -100,6 +102,145 @@ function validateVisualUrlsFile() {
   return validateVisualUrlsWorkbook(workbook);
 }
 
+function validatePageUrlsWorkbook(workbook) {
+  const firstSheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[firstSheetName];
+  const rows = sheet ? XLSX.utils.sheet_to_json(sheet, { defval: '' }) : [];
+  const urlColumn = rows.length && Object.prototype.hasOwnProperty.call(rows[0], 'URLs') ? 'URLs' : 'URL';
+
+  if (!rows.length || !Object.prototype.hasOwnProperty.call(rows[0], urlColumn)) {
+    return {
+      valid: false,
+      urls: [],
+      errors: ['Excel file must contain a header column named "URLs" or "URL".'],
+      duplicates: [],
+      invalidUrls: []
+    };
+  }
+
+  const urls = rows
+    .map((row, index) => ({
+      row: index + 2,
+      value: String(row[urlColumn] || '').trim()
+    }));
+
+  const invalidUrls = urls.filter(item => !isValidUrl(item.value));
+  const counts = urls.filter(item => item.value).reduce((acc, item) => {
+    const key = item.value.toLowerCase();
+    acc[key] = acc[key] || { url: item.value, rows: [] };
+    acc[key].rows.push(item.row);
+    return acc;
+  }, {});
+  const duplicates = Object.values(counts).filter(item => item.rows.length > 1);
+  const errors = [];
+
+  if (urls.length === 0) {
+    errors.push('Excel file must contain at least one URL.');
+  }
+  if (invalidUrls.length > 0) {
+    errors.push(`Invalid URLs found: ${invalidUrls.map(item => `${item.value || '(blank)'} (row ${item.row})`).join(', ')}`);
+  }
+  if (duplicates.length > 0) {
+    errors.push(`Duplicate URLs found: ${duplicates.map(item => `${item.url} (rows ${item.rows.join(', ')})`).join(', ')}`);
+  }
+
+  return {
+    valid: errors.length === 0,
+    urls: urls.map(item => item.value),
+    errors,
+    duplicates,
+    invalidUrls
+  };
+}
+
+function validatePageUrlsFile() {
+  if (!fs.existsSync(pageVerificationUrlsFilePath)) {
+    return {
+      valid: false,
+      urls: [],
+      errors: ['Upload PageVerificationUrls.xlsx before running Page Verification.'],
+      duplicates: [],
+      invalidUrls: []
+    };
+  }
+
+  const workbook = XLSX.readFile(pageVerificationUrlsFilePath);
+  return validatePageUrlsWorkbook(workbook);
+}
+
+function formatIstTimestamp(isoTimestamp) {
+  if (!isoTimestamp) return '';
+
+  const date = new Date(isoTimestamp);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return `${new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  }).format(date)} IST`;
+}
+
+function readBaselineHistory() {
+  if (!fs.existsSync(baselineRunFilePath)) return [];
+
+  try {
+    const history = JSON.parse(fs.readFileSync(baselineRunFilePath, 'utf8'));
+    return Array.isArray(history) ? history : [];
+  } catch (err) {
+    console.error('Could not read baseline history:', err.message);
+    return [];
+  }
+}
+
+function getLastBaselineRun() {
+  const latest = readBaselineHistory()
+    .filter(item => item.mode === 'reference' && item.time)
+    .sort((a, b) => new Date(b.time) - new Date(a.time))[0];
+
+  if (!latest) {
+    return {
+      lastBaseLineRunUtc: '',
+      lastBaseLineRunIst: ''
+    };
+  }
+
+  return {
+    lastBaseLineRunUtc: latest.time,
+    lastBaseLineRunIst: formatIstTimestamp(latest.time),
+    status: latest.status || ''
+  };
+}
+
+function saveBaselineRun(status = 'PASS') {
+  const time = new Date().toISOString();
+  const history = readBaselineHistory();
+  const entry = {
+    id: Date.now(),
+    mode: 'reference',
+    status,
+    time
+  };
+
+  history.push(entry);
+  fs.writeFileSync(baselineRunFilePath, JSON.stringify(history, null, 2));
+
+  return {
+    ...entry,
+    lastBaseLineRunUtc: time,
+    lastBaseLineRunIst: formatIstTimestamp(time)
+  };
+}
+
+app.get('/baseline-run/status', (req, res) => {
+  res.json(getLastBaselineRun());
+});
+
 // ---------------- VISUAL URL EXCEL UPLOAD ----------------
 app.post('/upload-visual-urls', (req, res) => {
   const { fileName, fileData } = req.body || {};
@@ -142,6 +283,54 @@ app.get('/visual-urls/status', (req, res) => {
       ...validation,
       count: validation.urls.length,
       filePath: '/tests/PriorityPagesList.xlsx'
+    });
+  } catch (err) {
+    res.status(400).json({ error: `Could not read Excel file: ${err.message}` });
+  }
+});
+
+// ---------------- PAGE VERIFICATION URL EXCEL UPLOAD ----------------
+app.post('/upload-page-urls', (req, res) => {
+  const { fileName, fileData } = req.body || {};
+
+  if (!fileName || !String(fileName).toLowerCase().endsWith('.xlsx')) {
+    return res.status(400).json({ error: 'Only .xlsx files are allowed.' });
+  }
+
+  if (!fileData) {
+    return res.status(400).json({ error: 'No file data received.' });
+  }
+
+  try {
+    const buffer = Buffer.from(fileData, 'base64');
+    const workbook = XLSX.read(buffer, { type: 'buffer' });
+    const validation = validatePageUrlsWorkbook(workbook);
+
+    if (!validation.valid) {
+      return res.status(400).json(validation);
+    }
+
+    fs.mkdirSync(path.dirname(pageVerificationUrlsFilePath), { recursive: true });
+    fs.writeFileSync(pageVerificationUrlsFilePath, buffer);
+
+    return res.json({
+      status: 'success',
+      message: `Uploaded ${validation.urls.length} page URL(s).`,
+      count: validation.urls.length,
+      filePath: '/tests/PageVerificationUrls.xlsx'
+    });
+  } catch (err) {
+    return res.status(400).json({ error: `Could not read Excel file: ${err.message}` });
+  }
+});
+
+app.get('/page-urls/status', (req, res) => {
+  try {
+    const validation = validatePageUrlsFile();
+    res.status(validation.valid ? 200 : 404).json({
+      ...validation,
+      count: validation.urls.length,
+      filePath: '/tests/PageVerificationUrls.xlsx'
     });
   } catch (err) {
     res.status(400).json({ error: `Could not read Excel file: ${err.message}` });
@@ -218,7 +407,13 @@ app.post('/run-test', (req, res) => {
     const rl = readline.createInterface({ input: child.stdout });
     rl.on('line', (line) => { console.log(line); sendLog(line); });
     child.stderr.on('data', (data) => { sendLog(data.toString()); });
-    child.on('close', () => { sendLog('\n🏁 PROCESS_COMPLETED'); });
+    child.on('close', (code) => {
+      if (mode === 'reference') {
+        const baselineRun = saveBaselineRun(code === 0 ? 'PASS' : 'FAIL');
+        sendLog('BASELINE_RUN_COMPLETED:' + baselineRun.lastBaseLineRunIst);
+      }
+      sendLog('PROCESS_COMPLETED');
+    });
     return res.json({ status: 'started' });
   }
 
@@ -238,7 +433,14 @@ app.post('/run-test', (req, res) => {
       const rl = readline.createInterface({ input: child.stdout, terminal: false });
       rl.on('line', (line) => { console.log(line); sendLog(line); });
       child.stderr.on('data', (data) => { sendLog(data.toString()); });
-      child.on('close', () => { sendLog('PROCESS_COMPLETED'); });
+      child.on('close', (code) => {
+        if (mode === 'reference') {
+          const baselineRun = saveBaselineRun(code === 0 ? 'PASS' : 'FAIL');
+          sendLog('BASELINE_RUN_COMPLETED:' + baselineRun.lastBaseLineRunIst);
+        }
+        runningProcesses[mode] = null;
+        sendLog('PROCESS_COMPLETED');
+      });
 
     } catch (err) {
       console.error(err);
@@ -358,9 +560,16 @@ app.use('/report', express.static(path.join(__dirname, 'backstop_data')));
 // ---------------- RUN BROKEN LINK SCRIPTS ----------------
 app.post('/run-broken-links', (req, res) => {
   const script = req.body.script;
+  const urlValidation = validatePageUrlsFile();
 
   console.log('Running Playwright script:', script);
   if (!script) return res.status(400).json({ error: 'Script name is required' });
+  if (!urlValidation.valid) {
+    return res.status(400).json({
+      error: 'Page Verification URL file is not valid.',
+      ...urlValidation
+    });
+  }
 
   sendLog(`🔍 Running Broken Link Script: ${script}\n`);
 

@@ -219,6 +219,7 @@ import React, { useEffect, useState, useRef } from 'react';
     const [visualUploadStatus, setVisualUploadStatus] = useState('');
     const [visualUploadError, setVisualUploadError] = useState('');
     const [visualUrlCount, setVisualUrlCount] = useState(0);
+    const [lastBaseLineRunIst, setLastBaseLineRunIst] = useState('');
 
     // ---------------- PAGE ----------------
     const [pageLogs, setPageLogs] = useState([]);
@@ -228,6 +229,11 @@ import React, { useEffect, useState, useRef } from 'react';
     const [exportReport, setExportReport] = useState('');
     const [downloadError, setDownloadError] = useState('');
     const [pageTestCompleted, setPageTestCompleted] = useState(false);
+    const [pageUrlFile, setPageUrlFile] = useState(null);
+    const [pageUploadStatus, setPageUploadStatus] = useState('');
+    const [pageUploadError, setPageUploadError] = useState('');
+    const [pageUrlCount, setPageUrlCount] = useState(0);
+    const [expectedPageUrls, setExpectedPageUrls] = useState(0);
 
     // ---------------- RESTART ----------------
     const [serverRestartStatus, setServerRestartStatus] = useState('');   // '' | 'restarting' | 'done' | 'error'
@@ -235,8 +241,8 @@ import React, { useEffect, useState, useRef } from 'react';
 
     // ---------------- DEVICES ----------------
     const [viewports, setViewports] = useState([
-      { label: 'phone', width: 375, height: 667, enabled: true },
-      { label: 'tablet', width: 768, height: 1024, enabled: true },
+      { label: 'Web1', width: 1920, height: 1080, enabled: true },
+      { label: 'Web2', width: 1280, height: 720, enabled: true },
       { label: 'desktop', width: 1366, height: 768, enabled: true }
     ]);
 
@@ -275,6 +281,38 @@ import React, { useEffect, useState, useRef } from 'react';
       loadVisualUrlStatus();
     }, []);
 
+    useEffect(() => {
+      const loadBaselineRunStatus = async () => {
+        try {
+          const response = await axios.get('http://localhost:3001/baseline-run/status');
+          setLastBaseLineRunIst(response.data.lastBaseLineRunIst || '');
+        } catch {
+          setLastBaseLineRunIst('');
+        }
+      };
+
+      loadBaselineRunStatus();
+    }, []);
+
+    useEffect(() => {
+      const loadPageUrlStatus = async () => {
+        try {
+          const response = await axios.get('http://localhost:3001/page-urls/status');
+          setPageUrlCount(response.data.count || 0);
+          setPageUploadStatus(`Ready: ${response.data.count || 0} page URL(s) loaded from /tests/PageVerificationUrls.xlsx`);
+          setPageUploadError('');
+        } catch (error) {
+          setPageUrlCount(0);
+          setPageUploadStatus('');
+          if (error.response?.data) {
+            setPageUploadError(formatVisualValidationError(error.response.data));
+          }
+        }
+      };
+
+      loadPageUrlStatus();
+    }, []);
+
     // ---------------- SSE ----------------
     useEffect(() => {
       const eventSource = new EventSource('http://localhost:3001/logs');
@@ -284,6 +322,11 @@ import React, { useEffect, useState, useRef } from 'react';
 
         // ================= VISUAL =================
         if (currentMode === 'reference' || currentMode === 'test') {
+          if (message.startsWith('BASELINE_RUN_COMPLETED:')) {
+            setLastBaseLineRunIst(message.replace('BASELINE_RUN_COMPLETED:', '').trim());
+            return;
+          }
+
           setVisualLogs(prev => [...prev, message]);
 
           if (message.startsWith('TOTAL_SCENARIOS:')) {
@@ -311,6 +354,9 @@ import React, { useEffect, useState, useRef } from 'react';
             if (currentMode === 'reference') {
               setBaselineProgress(100);
               setBaselineCompleted(true);
+              axios.get('http://localhost:3001/baseline-run/status')
+                .then(response => setLastBaseLineRunIst(response.data.lastBaseLineRunIst || ''))
+                .catch(() => {});
             } else {
               setTestProgress(100);
               setTestCompleted(true);
@@ -323,6 +369,13 @@ import React, { useEffect, useState, useRef } from 'react';
         if (currentMode === 'broken-links') {
           setPageLogs(prev => [...prev, message]);
 
+          if (message.includes('TOTAL_URLS:')) {
+            const total = Number(message.split('TOTAL_URLS:')[1]);
+            if (!Number.isNaN(total) && total > 0) {
+              setExpectedPageUrls(total);
+            }
+          }
+
           const isCompletion =
             /^\d+ (passed|failed) \(/.test(message.trim()) ||
             message.includes('PROCESS_COMPLETED');
@@ -334,11 +387,11 @@ import React, { useEffect, useState, useRef } from 'react';
             setPageProgress(5);
           }
 
-          const isTestResult = /^[✓✗×]\s+\d+\s+\[/.test(message.trim());
+          const isTestResult = message.includes('URL:') || /^[✓✗×]\s+\d+\s+\[/.test(message.trim());
 
           if (pageStartedRef.current && !isCompletion && isTestResult) {
             processedURLsRef.current += 1;
-            const total = 150;
+            const total = expectedPageUrls || Math.max(pageUrlCount, 1);
             const newProgress = Math.min(5 + Math.round((processedURLsRef.current / total) * 90), 95);
             setPageProgress(newProgress);
           }
@@ -355,7 +408,7 @@ import React, { useEffect, useState, useRef } from 'react';
       };
 
       return () => eventSource.close();
-    }, [currentMode, selectedCount, expectedVisualScenarios, visualUrlCount]);
+    }, [currentMode, selectedCount, expectedVisualScenarios, visualUrlCount, expectedPageUrls, pageUrlCount]);
 
     const formatVisualValidationError = (data) => {
       if (!data) return 'Upload failed. Please try again.';
@@ -413,6 +466,49 @@ import React, { useEffect, useState, useRef } from 'react';
       }
     };
 
+    const handlePageFileChange = (event) => {
+      const file = event.target.files?.[0] || null;
+      setPageUrlFile(file);
+      setPageUploadStatus('');
+      setPageUploadError('');
+
+      if (file && !file.name.toLowerCase().endsWith('.xlsx')) {
+        setPageUploadError('Only .xlsx files are allowed.');
+      }
+    };
+
+    const uploadPageUrlFile = async () => {
+      if (!pageUrlFile) {
+        setPageUploadError('Choose a .xlsx file before uploading.');
+        return;
+      }
+
+      if (!pageUrlFile.name.toLowerCase().endsWith('.xlsx')) {
+        setPageUploadError('Only .xlsx files are allowed.');
+        return;
+      }
+
+      setPageUploadError('');
+      setPageUploadStatus('Uploading and validating...');
+
+      try {
+        const fileData = await fileToBase64(pageUrlFile);
+        const response = await axios.post('http://localhost:3001/upload-page-urls', {
+          fileName: pageUrlFile.name,
+          fileData
+        });
+
+        const count = response.data.count || 0;
+        setPageUrlCount(count);
+        setExpectedPageUrls(0);
+        setPageUploadStatus(response.data.message || `Uploaded ${count} page URL(s).`);
+      } catch (error) {
+        setPageUrlCount(0);
+        setPageUploadStatus('');
+        setPageUploadError(formatVisualValidationError(error.response?.data));
+      }
+    };
+
     // ---------------- RUN VISUAL ----------------
     const runTest = async (mode) => {
       if (selectedCount === 0) return;
@@ -449,10 +545,15 @@ import React, { useEffect, useState, useRef } from 'react';
     // ---------------- RUN PAGE ----------------
     const runBrokenLinks = async () => {
       if (!selectedScript) return;
+      if (pageUrlCount === 0) {
+        setPageUploadError('Upload a valid .xlsx file before running Page Verification.');
+        return;
+      }
 
       pageStartedRef.current = false;
       completedRef.current = false;
       processedURLsRef.current = 0;
+      setExpectedPageUrls(0);
 
       setActiveAction('broken-links');
       setPageLogs([]);
@@ -461,9 +562,15 @@ import React, { useEffect, useState, useRef } from 'react';
       setPageTestCompleted(false);
       setCurrentMode('broken-links');
 
-      await axios.post('http://localhost:3001/run-broken-links', {
-        script: selectedScript
-      });
+      try {
+        await axios.post('http://localhost:3001/run-broken-links', {
+          script: selectedScript
+        });
+      } catch (error) {
+        setActiveAction('');
+        setCurrentMode('');
+        setPageUploadError(formatVisualValidationError(error.response?.data));
+      }
     };
 
     // ---------------- EXPORT REPORT ----------------
@@ -824,6 +931,18 @@ import React, { useEffect, useState, useRef } from 'react';
               {baselineCompleted && (
                 <div style={{...styles.statusBadge, ...styles.statusPass}}>✅ Baseline Complete</div>
               )}
+              <div style={{
+                marginTop: '10px',
+                padding: '10px 12px',
+                backgroundColor: '#eef7ff',
+                border: '1px solid #bbdefb',
+                borderRadius: '6px',
+                color: '#174ea6',
+                fontSize: '13px',
+                fontWeight: '600'
+              }}>
+                Last BaseLineRun: {lastBaseLineRunIst || 'Not run yet'}
+              </div>
               {(activeAction === 'reference' || baselineCompleted) && (
                 <div style={styles.progressContainer}>
                   <div style={styles.progressBar}>
@@ -900,6 +1019,46 @@ import React, { useEffect, useState, useRef } from 'react';
           <div style={styles.section}>
             <div style={styles.sectionTitle}>✅ Page Verification Module</div>
 
+            {/* PAGE URL UPLOAD */}
+            <div style={styles.card}>
+              <div style={styles.label}>Upload Page Verification URLs (.xlsx)</div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <input
+                  type="file"
+                  accept=".xlsx"
+                  onChange={handlePageFileChange}
+                  disabled={activeAction === 'broken-links'}
+                  style={{
+                    ...styles.selectDropdown,
+                    minWidth: '260px',
+                    borderColor: pageUploadError ? '#f44336' : '#ddd'
+                  }}
+                />
+                <button
+                  onClick={uploadPageUrlFile}
+                  disabled={!pageUrlFile || activeAction === 'broken-links'}
+                  style={{
+                    ...styles.button,
+                    ...styles.buttonSecondary,
+                    opacity: (!pageUrlFile || activeAction === 'broken-links') ? 0.6 : 1,
+                    cursor: (!pageUrlFile || activeAction === 'broken-links') ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  Upload File
+                </button>
+              </div>
+              {pageUploadStatus && (
+                <div style={{ ...styles.statusBadge, ...styles.statusPass }}>
+                  {pageUploadStatus}
+                </div>
+              )}
+              {pageUploadError && (
+                <div style={{ ...styles.statusBadge, ...styles.statusFail, whiteSpace: 'normal', lineHeight: '1.4' }}>
+                  {pageUploadError}
+                </div>
+              )}
+            </div>
+
             {/* RUN CONTROLS */}
             <div style={styles.card}>
               <div style={styles.label}>📄 Select Test Script</div>
@@ -920,12 +1079,12 @@ import React, { useEffect, useState, useRef } from 'react';
                 </select>
                 <button
                   onClick={runBrokenLinks}
-                  disabled={!selectedScript || activeAction === 'broken-links'}
+                  disabled={!selectedScript || pageUrlCount === 0 || activeAction === 'broken-links'}
                   style={{
                     ...styles.button,
                     ...styles.buttonPrimary,
-                    opacity: (!selectedScript || activeAction === 'broken-links') ? 0.6 : 1,
-                    cursor: (!selectedScript || activeAction === 'broken-links') ? 'not-allowed' : 'pointer'
+                    opacity: (!selectedScript || pageUrlCount === 0 || activeAction === 'broken-links') ? 0.6 : 1,
+                    cursor: (!selectedScript || pageUrlCount === 0 || activeAction === 'broken-links') ? 'not-allowed' : 'pointer'
                   }}
                 >
                   🚀 Run

@@ -5,7 +5,7 @@ import * as XLSX from "xlsx";
 import * as fs from "fs";
 import * as path from "path";
 
-const inputFilePath = path.resolve(__dirname, "PriorityPagesList.xlsx");
+const inputFilePath = path.resolve(__dirname, "PageVerificationUrls.xlsx");
 
 // Output File name (Like: page-load-report-2026-04-17_14-35-22.xlsx)
 const now = new Date();
