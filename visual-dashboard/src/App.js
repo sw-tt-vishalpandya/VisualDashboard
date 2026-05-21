@@ -587,13 +587,24 @@ import React, { useEffect, useState, useRef } from 'react';
         if (res.ok) {
           window.location.href = `http://localhost:3001/download-report?type=${type}`;
         } else {
-          const label = type === 'load-time' ? 'Load Time' : 'Status Code';
+          const reportLabels = {
+            'load-time': 'Load Time',
+            'status-code': 'Status Code',
+            'link-redirect': 'Anchor Link Redirect'
+          };
+          const label = reportLabels[type] || type;
           setDownloadError(`${label} report not found. Run the check first to generate it.`);
         }
       } catch {
         setDownloadError('Could not reach the server. Make sure the backend is running.');
       }
     };
+
+    const selectedPageCheckName = selectedScript.includes('statusCode')
+      ? 'Status Code Check'
+      : selectedScript.includes('linkRedirect')
+        ? 'Anchor Link Redirect Check'
+        : 'Load Time Check';
 
     // ---------------- RESTART SERVER ----------------
     // Calls /restart-server — backend responds then calls process.exit(0).
@@ -1076,6 +1087,7 @@ import React, { useEffect, useState, useRef } from 'react';
                   <option value="">Select Script</option>
                   <option value="tests/loadTimeCheck.spec.ts">⏱️ Load Time Check</option>
                   <option value="tests/statusCodeCheck.spec.ts">📡 Status Code Check</option>
+                  <option value="tests/linkRedirectCheck.spec.ts">Anchor Link Redirect Check</option>
                 </select>
                 <button
                   onClick={runBrokenLinks}
@@ -1102,6 +1114,7 @@ import React, { useEffect, useState, useRef } from 'react';
                   <option value="">📊 Export Report</option>
                   <option value="load-time">⏱️ Load Time Report</option>
                   <option value="status-code">📡 Status Code Report</option>
+                  <option value="link-redirect">Anchor Link Redirect Report</option>
                 </select>
               </div>
 
@@ -1121,7 +1134,7 @@ import React, { useEffect, useState, useRef } from 'react';
                   ...styles.statusRunning,
                   marginTop: '10px'
                 }}>
-                  ⏳ {selectedScript.includes('statusCode') ? 'Status Code Check' : 'Load Time Check'} in progress...
+                  ⏳ {selectedPageCheckName} in progress...
                 </div>
               )}
             </div>
@@ -1132,7 +1145,7 @@ import React, { useEffect, useState, useRef } from 'react';
                 <div style={styles.label}>📈 Progress</div>
                 {activeAction === 'broken-links' && (
                   <div style={{...styles.statusBadge, ...styles.statusRunning, marginBottom: '15px'}}>
-                    ⏳ {selectedScript.includes('statusCode') ? 'Status Code Check' : 'Load Time Check'} in progress...
+                    ⏳ {selectedPageCheckName} in progress...
                   </div>
                 )}
                 {pageTestCompleted && (
