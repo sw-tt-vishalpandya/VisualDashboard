@@ -590,7 +590,8 @@ import React, { useEffect, useState, useRef } from 'react';
           const reportLabels = {
             'load-time': 'Load Time',
             'status-code': 'Status Code',
-            'link-redirect': 'Anchor Link Redirect'
+            'link-redirect': 'Anchor Link Redirect',
+            'spell-check': 'Spell Check'
           };
           const label = reportLabels[type] || type;
           setDownloadError(`${label} report not found. Run the check first to generate it.`);
@@ -604,7 +605,9 @@ import React, { useEffect, useState, useRef } from 'react';
       ? 'Status Code Check'
       : selectedScript.includes('linkRedirect')
         ? 'Anchor Link Redirect Check'
-        : 'Load Time Check';
+        : selectedScript.includes('spellCheck')
+          ? 'Spell Check'
+          : 'Load Time Check';
 
     // ---------------- RESTART SERVER ----------------
     // Calls /restart-server — backend responds then calls process.exit(0).
@@ -1088,6 +1091,7 @@ import React, { useEffect, useState, useRef } from 'react';
                   <option value="tests/loadTimeCheck.spec.ts">⏱️ Load Time Check</option>
                   <option value="tests/statusCodeCheck.spec.ts">📡 Status Code Check</option>
                   <option value="tests/linkRedirectCheck.spec.ts">Anchor Link Redirect Check</option>
+                  <option value="tests/spellCheck.spec.ts">Spell Check</option>
                 </select>
                 <button
                   onClick={runBrokenLinks}
@@ -1115,6 +1119,7 @@ import React, { useEffect, useState, useRef } from 'react';
                   <option value="load-time">⏱️ Load Time Report</option>
                   <option value="status-code">📡 Status Code Report</option>
                   <option value="link-redirect">Anchor Link Redirect Report</option>
+                  <option value="spell-check">Spell Check Report</option>
                 </select>
               </div>
 

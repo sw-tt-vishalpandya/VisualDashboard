@@ -17,6 +17,13 @@ type AnchorLink = {
 	skipReason: string;
 };
 
+type SourcePageScan = {
+	anchors: AnchorLink[];
+	statusCode: number | string;
+	finalUrl: string;
+	error?: string;
+};
+
 type ValidationResult = {
 	finalUrl: string;
 	statusCode: number | string;
@@ -41,6 +48,30 @@ const validationCache = new Map<string, ValidationResult>();
 const reportsDir = path.resolve(__dirname, "../test-results/reports");
 fs.mkdirSync(reportsDir, { recursive: true });
 const outputFilePath = path.join(reportsDir, `link-redirect-results-${process.pid}.json`);
+
+const blankReportRow: RedirectReportRow = {
+	"Source Page URL": "",
+	"Anchor Text": "",
+	"Original href URL": "",
+	"Final Destination URL": "",
+	"Status Code": "",
+	"Is Redirected?": "",
+	"Validation Status": "",
+	"Remarks": "",
+};
+
+function buildSourcePageFailureRow(sourcePageUrl: string, scan: SourcePageScan): RedirectReportRow {
+	return {
+		"Source Page URL": sourcePageUrl,
+		"Anchor Text": "",
+		"Original href URL": sourcePageUrl,
+		"Final Destination URL": scan.finalUrl || sourcePageUrl,
+		"Status Code": scan.statusCode,
+		"Is Redirected?": "[ ]",
+		"Validation Status": "FAIL",
+		"Remarks": scan.error || `Source page returned HTTP ${scan.statusCode}. Anchor validation was not run.`,
+	};
+}
 
 function resolveHref(rawHref: string, sourcePageUrl: string) {
 	const href = rawHref.trim();
@@ -96,8 +127,28 @@ function resolveRedirectLocation(currentUrl: string, locationHeader: string) {
 	}
 }
 
-async function collectAnchorLinks(page: Page, sourcePageUrl: string) {
-	await page.goto(sourcePageUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+async function collectAnchorLinks(page: Page, sourcePageUrl: string): Promise<SourcePageScan> {
+	const response = await page.goto(sourcePageUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+	const sourceStatus = response?.status() || "No Response";
+	const finalUrl = page.url();
+
+	if (!response) {
+		return {
+			anchors: [],
+			statusCode: sourceStatus,
+			finalUrl,
+			error: "Source page did not return a response. Anchor validation was not run.",
+		};
+	}
+
+	if (response.status() >= 400) {
+		return {
+			anchors: [],
+			statusCode: response.status(),
+			finalUrl,
+		};
+	}
+
 	await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
 
 	const anchors = await page.locator("a").evaluateAll((links) =>
@@ -107,7 +158,8 @@ async function collectAnchorLinks(page: Page, sourcePageUrl: string) {
 		}))
 	);
 
-	return anchors.map((anchor) => {
+	return {
+		anchors: anchors.map((anchor) => {
 		const resolved = resolveHref(anchor.originalHref, sourcePageUrl);
 		return {
 			anchorText: anchor.anchorText || "(no anchor text)",
@@ -115,7 +167,10 @@ async function collectAnchorLinks(page: Page, sourcePageUrl: string) {
 			resolvedUrl: resolved.resolvedUrl,
 			skipReason: resolved.skipReason,
 		};
-	});
+	}),
+		statusCode: sourceStatus,
+		finalUrl,
+	};
 }
 
 async function validateResolvedUrl(request: APIRequestContext, originalUrl: string): Promise<ValidationResult> {
@@ -126,6 +181,7 @@ async function validateResolvedUrl(request: APIRequestContext, originalUrl: stri
 	const redirectCodes: number[] = [];
 	let currentUrl = originalUrl;
 	let finalUrl = originalUrl;
+	let firstStatus: number | string = "Not Checked";
 	let finalStatus: number | string = "Not Checked";
 	let remarks = "";
 	let validationStatus: "PASS" | "FAIL" = "PASS";
@@ -140,6 +196,9 @@ async function validateResolvedUrl(request: APIRequestContext, originalUrl: stri
 			});
 
 			const status = response.status();
+			if (firstStatus === "Not Checked") {
+				firstStatus = status;
+			}
 			finalStatus = status;
 			finalUrl = currentUrl;
 			const location = response.headers().location;
@@ -170,7 +229,7 @@ async function validateResolvedUrl(request: APIRequestContext, originalUrl: stri
 				validationStatus = "FAIL";
 				remarks = `Broken link returned HTTP ${status}`;
 			} else if (redirectCodes.length > 0) {
-				remarks = `Redirected through ${redirectCodes.length} step(s)`;
+				remarks = `Redirect chain: ${[...redirectCodes, status].join(" -> ")}`;
 			} else {
 				remarks = "No redirect";
 			}
@@ -182,20 +241,31 @@ async function validateResolvedUrl(request: APIRequestContext, originalUrl: stri
 			remarks = `Exceeded ${maxRedirects} redirects`;
 		}
 	} catch (error: any) {
+		if (firstStatus === "Not Checked") {
+			firstStatus = "Error";
+		}
 		finalStatus = "Error";
 		validationStatus = "FAIL";
 		remarks = error.message || "Request failed";
 	}
 
+	const reportedStatus = redirectCodes.length > 0 ? redirectCodes[0] : firstStatus;
 	const isRedirected =
+		reportedStatus === 200 ||
+		reportedStatus === 301 ||
 		redirectCodes.length > 0 ||
 		normalizeForComparison(finalUrl) !== normalizeForComparison(originalUrl);
-	const statusCode =
-		redirectCodes.length > 0 ? [...redirectCodes, finalStatus].join(" -> ") : finalStatus;
+	if (isRedirected && reportedStatus === 200 && remarks === "No redirect") {
+		remarks = "Redirected correctly with HTTP 200";
+	} else if (isRedirected && reportedStatus === 301 && redirectCodes.length === 0) {
+		remarks = "Redirected correctly with HTTP 301";
+	} else if (isRedirected && redirectCodes.length > 0) {
+		remarks = `Redirected correctly. ${remarks}`;
+	}
 
 	const result: ValidationResult = {
 		finalUrl,
-		statusCode,
+		statusCode: reportedStatus,
 		isRedirected,
 		validationStatus,
 		remarks,
@@ -205,8 +275,8 @@ async function validateResolvedUrl(request: APIRequestContext, originalUrl: stri
 	return result;
 }
 
-function addReportRow(sourcePageUrl: string, anchor: AnchorLink, validation: ValidationResult) {
-	results.push({
+function buildReportRow(sourcePageUrl: string, anchor: AnchorLink, validation: ValidationResult): RedirectReportRow {
+	return {
 		"Source Page URL": sourcePageUrl,
 		"Anchor Text": anchor.anchorText,
 		"Original href URL": anchor.originalHref,
@@ -215,55 +285,57 @@ function addReportRow(sourcePageUrl: string, anchor: AnchorLink, validation: Val
 		"Is Redirected?": validation.isRedirected ? "[x]" : "[ ]",
 		"Validation Status": validation.validationStatus,
 		"Remarks": validation.remarks,
-	});
+	};
 }
 
 test("Anchor Link Redirect Check", async ({ page, request }) => {
 	test.setTimeout(900000);
 
 	const anchorsByPage = new Map<string, AnchorLink[]>();
+	const sourcePageFailures: RedirectReportRow[] = [];
 	let totalAnchors = 0;
 
 	for (const sourcePageUrl of pageUrls) {
 		console.log("\nScanning Page:", sourcePageUrl);
 
 		try {
-			const anchors = await collectAnchorLinks(page, sourcePageUrl);
-			anchorsByPage.set(sourcePageUrl, anchors);
-			totalAnchors += anchors.length;
-			console.log(`Anchor Tags Found: ${anchors.length}`);
+			const scan = await collectAnchorLinks(page, sourcePageUrl);
 
-			if (anchors.length === 0) {
-				results.push({
-					"Source Page URL": sourcePageUrl,
-					"Anchor Text": "",
-					"Original href URL": "",
-					"Final Destination URL": "",
-					"Status Code": "Skipped",
-					"Is Redirected?": "[ ]",
-					"Validation Status": "SKIPPED",
-					"Remarks": "No anchor tags found on source page",
-				});
+			if (scan.error || typeof scan.statusCode === "number" && scan.statusCode >= 400) {
+				console.log("Source Page Status:", scan.statusCode);
+				console.log("Page Scan Failed:", scan.error || `Source page returned HTTP ${scan.statusCode}`);
+				sourcePageFailures.push(buildSourcePageFailureRow(sourcePageUrl, scan));
+				anchorsByPage.set(sourcePageUrl, []);
+				continue;
 			}
+
+			anchorsByPage.set(sourcePageUrl, scan.anchors);
+			totalAnchors += scan.anchors.length;
+			console.log(`Anchor Tags Found: ${scan.anchors.length}`);
 		} catch (error: any) {
 			console.log("Page Scan Failed:", error.message);
+			sourcePageFailures.push(buildSourcePageFailureRow(sourcePageUrl, {
+				anchors: [],
+				statusCode: "Error",
+				finalUrl: sourcePageUrl,
+				error: `Could not open source page: ${error.message}`,
+			}));
 			anchorsByPage.set(sourcePageUrl, []);
-			results.push({
-				"Source Page URL": sourcePageUrl,
-				"Anchor Text": "",
-				"Original href URL": "",
-				"Final Destination URL": "",
-				"Status Code": "Error",
-				"Is Redirected?": "[ ]",
-				"Validation Status": "FAIL",
-				"Remarks": `Could not open source page: ${error.message}`,
-			});
 		}
 	}
 
 	console.log(`TOTAL_URLS:${totalAnchors}`);
 
 	for (const [sourcePageUrl, anchors] of anchorsByPage) {
+		const sourceRows: RedirectReportRow[] = [];
+		const sourceFailure = sourcePageFailures.find(row => row["Source Page URL"] === sourcePageUrl);
+
+		if (sourceFailure) {
+			results.push(sourceFailure);
+			results.push(blankReportRow);
+			continue;
+		}
+
 		for (const anchor of anchors) {
 			console.log("\nSource Page:", sourcePageUrl);
 			console.log("Anchor Text:", anchor.anchorText);
@@ -272,13 +344,6 @@ test("Anchor Link Redirect Check", async ({ page, request }) => {
 			if (anchor.skipReason) {
 				console.log("Validation Status: SKIPPED");
 				console.log("Remarks:", anchor.skipReason);
-				addReportRow(sourcePageUrl, anchor, {
-					finalUrl: "",
-					statusCode: "Skipped",
-					isRedirected: false,
-					validationStatus: "SKIPPED",
-					remarks: anchor.skipReason,
-				});
 				continue;
 			}
 
@@ -290,7 +355,12 @@ test("Anchor Link Redirect Check", async ({ page, request }) => {
 			console.log("Validation Status:", validation.validationStatus);
 			console.log("Remarks:", validation.remarks);
 
-			addReportRow(sourcePageUrl, anchor, validation);
+			sourceRows.push(buildReportRow(sourcePageUrl, anchor, validation));
+		}
+
+		if (sourceRows.length > 0) {
+			results.push(...sourceRows);
+			results.push(blankReportRow);
 		}
 	}
 });

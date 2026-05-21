@@ -602,6 +602,10 @@ function cleanupPageVerificationReports(script) {
     'tests/linkRedirectCheck.spec.ts': {
       jsonPrefix: 'link-redirect-results-',
       excelFile: 'link-redirect-report.xlsx'
+    },
+    'tests/spellCheck.spec.ts': {
+      jsonPrefix: 'spell-check-results-',
+      excelFile: 'spell-check-report.xlsx'
     }
   };
 
@@ -689,27 +693,32 @@ function handleReportDownload(req, res, headOnly = false) {
     'statuscode': 'status-code',
     'link-redirect': 'link-redirect',
     'linkredirect': 'link-redirect',
-    'redirect': 'link-redirect'
+    'redirect': 'link-redirect',
+    'spell-check': 'spell-check',
+    'spellcheck': 'spell-check',
+    'spell': 'spell-check'
   };
   const type = reportAliases[requestedType] || requestedType;
 
   const reportMap = {
     'load-time':   path.join(__dirname, 'excelReport', 'page-load-report.xlsx'),
     'status-code': path.join(__dirname, 'excelReport', 'status-code-report.xlsx'),
-    'link-redirect': path.join(__dirname, 'excelReport', 'link-redirect-report.xlsx')
+    'link-redirect': path.join(__dirname, 'excelReport', 'link-redirect-report.xlsx'),
+    'spell-check': path.join(__dirname, 'excelReport', 'spell-check-report.xlsx')
   };
 
   const filePath = reportMap[type];
 
   if (!filePath) {
-    return res.status(400).json({ error: 'Invalid report type. Use load-time, status-code, or link-redirect.' });
+    return res.status(400).json({ error: 'Invalid report type. Use load-time, status-code, link-redirect, or spell-check.' });
   }
 
   if (!fs.existsSync(filePath)) {
     const reportLabels = {
       'load-time': 'Load Time',
       'status-code': 'Status Code',
-      'link-redirect': 'Anchor Link Redirect'
+      'link-redirect': 'Anchor Link Redirect',
+      'spell-check': 'Spell Check'
     };
     return res.status(404).json({
       error: `Report not found. Run the ${reportLabels[type] || type} check first.`
@@ -719,7 +728,8 @@ function handleReportDownload(req, res, headOnly = false) {
   const fileName = {
     'load-time': 'page-load-report.xlsx',
     'status-code': 'status-code-report.xlsx',
-    'link-redirect': 'link-redirect-report.xlsx'
+    'link-redirect': 'link-redirect-report.xlsx',
+    'spell-check': 'spell-check-report.xlsx'
   }[type];
 
   if (headOnly) {

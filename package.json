@@ -4,8 +4,10 @@
     "cheerio": "^1.2.0",
     "child_process": "^1.0.2",
     "cors": "^2.8.6",
+    "dictionary-en": "^4.0.0",
     "express": "^5.2.1",
     "fs-extra": "^11.3.4",
+    "nspell": "^2.1.5",
     "xlsx": "^0.18.5",
     "xlsx-import": "^2.4.7",
     "xml2js": "^0.6.2"

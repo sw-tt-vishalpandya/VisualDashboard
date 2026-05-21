@@ -14,10 +14,29 @@ module.exports = async function globalTeardown() {
     const pageResults = [];
     const statusResults = [];
     const redirectResults = [];
+    const spellResults = [];
+    let redirectReportWasRun = false;
+    let spellReportWasRun = false;
+    const redirectHeaders = [
+      'Source Page URL',
+      'Anchor Text',
+      'Original href URL',
+      'Final Destination URL',
+      'Status Code',
+      'Is Redirected?',
+      'Validation Status',
+      'Remarks'
+    ];
 
     for (const file of files) {
       if (!file.endsWith('.json')) continue;
       const filePath = path.join(reportsDir, file);
+      if (file.startsWith('link-redirect-results-')) {
+        redirectReportWasRun = true;
+      }
+      if (file.startsWith('spell-check-results-')) {
+        spellReportWasRun = true;
+      }
       let data;
       try {
         data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -32,7 +51,10 @@ module.exports = async function globalTeardown() {
       // Link redirect results have 'Original href URL' and 'Is Redirected?'
       if (Array.isArray(data) && data.length > 0) {
         const firstItem = data[0];
-        if (firstItem.hasOwnProperty('Is Redirected?') || firstItem.hasOwnProperty('Is redirected?')) {
+        if (firstItem.hasOwnProperty('Misspelled Words') && firstItem.hasOwnProperty('Suggested Corrections')) {
+          // Spell check test results
+          spellResults.push(...data);
+        } else if (firstItem.hasOwnProperty('Is Redirected?') || firstItem.hasOwnProperty('Is redirected?')) {
           // Link redirect test results
           redirectResults.push(...data);
         } else if (firstItem.hasOwnProperty('StatusCode')) {
@@ -73,9 +95,11 @@ module.exports = async function globalTeardown() {
       console.log('No status results to merge');
     }
 
-    if (redirectResults.length > 0) {
-      const worksheet = XLSX.utils.json_to_sheet(redirectResults);
-      XLSX.utils.sheet_add_aoa(worksheet, [Object.keys(redirectResults[0])], { origin: 'A1' });
+    if (redirectResults.length > 0 || redirectReportWasRun) {
+      const worksheet = redirectResults.length > 0
+        ? XLSX.utils.json_to_sheet(redirectResults, { header: redirectHeaders })
+        : XLSX.utils.aoa_to_sheet([redirectHeaders]);
+      XLSX.utils.sheet_add_aoa(worksheet, [redirectHeaders], { origin: 'A1' });
       worksheet['!cols'] = [
         { wch: 70 },
         { wch: 35 },
@@ -94,6 +118,23 @@ module.exports = async function globalTeardown() {
       console.log('Merged link redirect report saved to', outPath);
     } else {
       console.log('No link redirect results to merge');
+    }
+
+    if (spellResults.length > 0 || spellReportWasRun) {
+      const spellHeaders = ['Page URL', 'Misspelled Words', 'Suggested Corrections', 'Status'];
+      const worksheet = spellResults.length > 0
+        ? XLSX.utils.json_to_sheet(spellResults, { header: spellHeaders })
+        : XLSX.utils.aoa_to_sheet([spellHeaders]);
+      XLSX.utils.sheet_add_aoa(worksheet, [spellHeaders], { origin: 'A1' });
+      worksheet['!cols'] = [{ wch: 70 }, { wch: 60 }, { wch: 80 }, { wch: 12 }];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, worksheet, 'Spell Check Report');
+      const outPath = path.join(outDir, 'spell-check-report.xlsx');
+      XLSX.writeFile(wb, outPath);
+      console.log('Merged spell check report saved to', outPath);
+    } else {
+      console.log('No spell check results to merge');
     }
 
     // Optional: remove per-worker JSON files
