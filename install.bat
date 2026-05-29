@@ -72,6 +72,13 @@ if %errorlevel% neq 0 (
     pause
     exit /b 1
 )
+call npm install nspell dictionary-en
+if %errorlevel% neq 0 (
+    color 0C
+    echo [ERROR] Spell check dependency install failed.
+    pause
+    exit /b 1
+)
 echo       Done.
 echo.
 

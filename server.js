@@ -198,10 +198,68 @@ function readBaselineHistory() {
   }
 }
 
+function getLatestBaselineArtifactRun() {
+  const basePath = path.join(__dirname, 'backstop_data');
+  const latest = {
+    time: 0,
+    path: ''
+  };
+
+  function scanDirectory(dirPath, isInReferenceDir = false) {
+    if (!fs.existsSync(dirPath)) return;
+
+    let entries = [];
+    try {
+      entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    } catch (err) {
+      console.error('Could not scan baseline artifacts:', err.message);
+      return;
+    }
+
+    entries.forEach(entry => {
+      const entryPath = path.join(dirPath, entry.name);
+      const inReferenceDir = isInReferenceDir || entry.name === 'bitmaps_reference';
+
+      if (entry.isDirectory()) {
+        scanDirectory(entryPath, inReferenceDir);
+        return;
+      }
+
+      if (!inReferenceDir || !entry.isFile()) return;
+
+      try {
+        const stats = fs.statSync(entryPath);
+        const modifiedTime = stats.mtime.getTime();
+        if (modifiedTime > latest.time) {
+          latest.time = modifiedTime;
+          latest.path = entryPath;
+        }
+      } catch (err) {
+        console.error('Could not read baseline artifact timestamp:', err.message);
+      }
+    });
+  }
+
+  scanDirectory(basePath);
+
+  if (!latest.time) return null;
+
+  return {
+    mode: 'reference',
+    status: '',
+    time: new Date(latest.time).toISOString(),
+    source: 'artifacts',
+    artifactPath: latest.path
+  };
+}
+
 function getLastBaselineRun() {
-  const latest = readBaselineHistory()
+  const latestHistory = readBaselineHistory()
     .filter(item => item.mode === 'reference' && item.time)
     .sort((a, b) => new Date(b.time) - new Date(a.time))[0];
+  const latestArtifact = getLatestBaselineArtifactRun();
+  const candidates = [latestHistory, latestArtifact].filter(item => item && item.time);
+  const latest = candidates.sort((a, b) => new Date(b.time) - new Date(a.time))[0];
 
   if (!latest) {
     return {
@@ -213,7 +271,8 @@ function getLastBaselineRun() {
   return {
     lastBaseLineRunUtc: latest.time,
     lastBaseLineRunIst: formatIstTimestamp(latest.time),
-    status: latest.status || ''
+    status: latest.status || '',
+    source: latest.source || 'history'
   };
 }
 
@@ -530,6 +589,39 @@ function cleanupBatchData(mode) {
   }
 }
 
+function cleanupPageVerificationReports(script) {
+  const reportConfig = {
+    'tests/loadTimeCheck.spec.ts': {
+      jsonPrefix: 'page-load-results-',
+      excelFile: 'page-load-report.xlsx'
+    },
+    'tests/statusCodeCheck.spec.ts': {
+      jsonPrefix: 'statuscode-results-',
+      excelFile: 'status-code-report.xlsx'
+    },
+    'tests/linkRedirectCheck.spec.ts': {
+      jsonPrefix: 'link-redirect-results-',
+      excelFile: 'link-redirect-report.xlsx'
+    },
+    'tests/spellCheck.spec.ts': {
+      jsonPrefix: 'spell-check-results-',
+      excelFile: 'spell-check-report.xlsx'
+    }
+  };
+
+  const config = reportConfig[script];
+  if (!config) return;
+
+  const reportsDir = path.join(__dirname, 'test-results', 'reports');
+  if (fs.existsSync(reportsDir)) {
+    fs.readdirSync(reportsDir)
+      .filter(file => file.startsWith(config.jsonPrefix) && file.endsWith('.json'))
+      .forEach(file => fs.rmSync(path.join(reportsDir, file), { force: true }));
+  }
+
+  fs.rmSync(path.join(__dirname, 'excelReport', config.excelFile), { force: true });
+}
+
 // ================ DELETE BACKSTOP DATA (DEPRECATED - kept for backward compatibility) ================
 app.post('/delete-data', (req, res) => {
   const { type } = req.body;
@@ -571,6 +663,7 @@ app.post('/run-broken-links', (req, res) => {
     });
   }
 
+  cleanupPageVerificationReports(script);
   sendLog(`🔍 Running Broken Link Script: ${script}\n`);
 
   const child = spawn('npx', ['playwright', 'test', script], {
@@ -590,27 +683,59 @@ app.post('/run-broken-links', (req, res) => {
 });
 
 // ---------------- DOWNLOAD XLSX REPORT ----------------
-app.get('/download-report', (req, res) => {
-  const { type } = req.query;
+function handleReportDownload(req, res, headOnly = false) {
+  const requestedType = String(req.query.type || '').trim().toLowerCase();
+  const reportAliases = {
+    'load-time': 'load-time',
+    'loadtime': 'load-time',
+    'page-load': 'load-time',
+    'status-code': 'status-code',
+    'statuscode': 'status-code',
+    'link-redirect': 'link-redirect',
+    'linkredirect': 'link-redirect',
+    'redirect': 'link-redirect',
+    'spell-check': 'spell-check',
+    'spellcheck': 'spell-check',
+    'spell': 'spell-check'
+  };
+  const type = reportAliases[requestedType] || requestedType;
 
   const reportMap = {
     'load-time':   path.join(__dirname, 'excelReport', 'page-load-report.xlsx'),
-    'status-code': path.join(__dirname, 'excelReport', 'status-code-report.xlsx')
+    'status-code': path.join(__dirname, 'excelReport', 'status-code-report.xlsx'),
+    'link-redirect': path.join(__dirname, 'excelReport', 'link-redirect-report.xlsx'),
+    'spell-check': path.join(__dirname, 'excelReport', 'spell-check-report.xlsx')
   };
 
   const filePath = reportMap[type];
 
   if (!filePath) {
-    return res.status(400).json({ error: 'Invalid report type. Use load-time or status-code.' });
+    return res.status(400).json({ error: 'Invalid report type. Use load-time, status-code, link-redirect, or spell-check.' });
   }
 
   if (!fs.existsSync(filePath)) {
+    const reportLabels = {
+      'load-time': 'Load Time',
+      'status-code': 'Status Code',
+      'link-redirect': 'Anchor Link Redirect',
+      'spell-check': 'Spell Check'
+    };
     return res.status(404).json({
-      error: `Report not found. Run the ${type === 'load-time' ? 'Load Time' : 'Status Code'} check first.`
+      error: `Report not found. Run the ${reportLabels[type] || type} check first.`
     });
   }
 
-  const fileName = type === 'load-time' ? 'page-load-report.xlsx' : 'status-code-report.xlsx';
+  const fileName = {
+    'load-time': 'page-load-report.xlsx',
+    'status-code': 'status-code-report.xlsx',
+    'link-redirect': 'link-redirect-report.xlsx',
+    'spell-check': 'spell-check-report.xlsx'
+  }[type];
+
+  if (headOnly) {
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    return res.sendStatus(200);
+  }
 
   res.download(filePath, fileName, (err) => {
     if (err) {
@@ -618,6 +743,14 @@ app.get('/download-report', (req, res) => {
       if (!res.headersSent) res.status(500).json({ error: 'Failed to download report' });
     }
   });
+}
+
+app.head('/download-report', (req, res) => {
+  handleReportDownload(req, res, true);
+});
+
+app.get('/download-report', (req, res) => {
+  handleReportDownload(req, res);
 });
 
 // ---------------- RESTART SERVER ----------------
