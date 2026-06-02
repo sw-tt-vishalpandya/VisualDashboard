@@ -396,6 +396,24 @@ app.get('/page-urls/status', (req, res) => {
   }
 });
 
+// ---------------- SAMPLE FILE DOWNLOAD ----------------
+app.get('/download-sample', (req, res) => {
+  const type = String(req.query.type || '').toLowerCase();
+
+  let filePathToSend = null;
+  if (type === 'visual') filePathToSend = visualUrlsFilePath;
+  else if (type === 'page') filePathToSend = pageVerificationUrlsFilePath;
+  else return res.status(400).json({ error: 'Invalid sample type. Use ?type=visual or ?type=page' });
+
+  if (!fs.existsSync(filePathToSend)) {
+    return res.status(404).json({ error: 'Sample file not found on server.' });
+  }
+
+  res.download(filePathToSend, path.basename(filePathToSend), (err) => {
+    if (err) res.status(500).end();
+  });
+});
+
 // ---------------- LOG STREAM ----------------
 const clients = [];
 
