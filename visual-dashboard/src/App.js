@@ -767,6 +767,15 @@ import React, { useEffect, useState, useRef } from 'react';
                 >
                   Upload File
                 </button>
+                <button
+                  onClick={() => { window.location.href = 'http://localhost:3001/download-sample?type=visual'; }}
+                  style={{
+                    ...styles.button,
+                    ...styles.buttonWarning
+                  }}
+                >
+                  ⤓ Download Sample
+                </button>
               </div>
               {visualUploadStatus && (
                 <div style={{ ...styles.statusBadge, ...styles.statusPass }}>
@@ -1059,6 +1068,15 @@ import React, { useEffect, useState, useRef } from 'react';
                   }}
                 >
                   Upload File
+                </button>
+                <button
+                  onClick={() => { window.location.href = 'http://localhost:3001/download-sample?type=page'; }}
+                  style={{
+                    ...styles.button,
+                    ...styles.buttonWarning
+                  }}
+                >
+                  ⤓ Download Sample
                 </button>
               </div>
               {pageUploadStatus && (
