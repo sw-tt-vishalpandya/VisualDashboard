@@ -1,5 +1,5 @@
 {
-  "token": "ghp_REPLACE_WITH_YOUR_TOKEN",
+  "token": "",
   "repo": "sw-tt-vishalpandya/VisualDashboard",
-  "update_channel": "develop"
+  "update_channel": "feature/stable"
 }
