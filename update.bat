@@ -69,8 +69,7 @@ for /f "usebackq delims=" %%A in (`powershell -NoProfile -Command ^
 )
 
 :: Validate required fields
-if "!TOKEN!"=="ERROR" goto :config_error
-if "!TOKEN!"==""       goto :config_error
+if "!TOKEN!"=="ERROR" set "TOKEN="
 if "!REPO!"=="ERROR"   goto :config_error
 if "!REPO!"==""        goto :config_error
 
@@ -80,7 +79,11 @@ if "!UPDATE_CHANNEL!"=="ERROR" set "UPDATE_CHANNEL=stable"
 
 echo        Repository  : !REPO!
 echo        Channel     : !UPDATE_CHANNEL!
-echo        Token       : (loaded)
+if "!TOKEN!"=="" (
+    echo        Token       : (none - public repo access only)
+) else (
+    echo        Token       : (loaded)
+)
 echo.
 
 :: ------------------------------------------------------------
@@ -104,12 +107,13 @@ echo        Installed version : !CURRENT_VERSION!
 echo [4/7] Checking for latest release on GitHub...
 
 for /f "usebackq delims=" %%A in (`powershell -NoProfile -Command ^
-    "$headers = @{ Authorization = 'token !TOKEN!'; 'User-Agent' = 'update-bat' };" ^
-    "try {" ^
-    "  $r = Invoke-RestMethod -Uri 'https://api.github.com/repos/!REPO!/releases/latest' -Headers $headers -ErrorAction Stop;" ^
-    "  Write-Output $r.tag_name" ^
-    "} catch {" ^
-    "  Write-Output 'FETCH_ERROR'" ^
+    "try { " ^
+    "  $headers = @{ 'User-Agent' = 'update-bat' }; " ^
+    "  if ('!TOKEN!' -ne '') { $headers['Authorization'] = 'token !TOKEN!' } " ^
+    "  $r = Invoke-RestMethod -Uri 'https://api.github.com/repos/!REPO!/releases/latest' -Headers $headers -ErrorAction Stop; " ^
+    "  Write-Output $r.tag_name " ^
+    "} catch { " ^
+    "  Write-Output 'FETCH_ERROR' " ^
     "}"`) do (
     set "LATEST_VERSION=%%A"
 )
@@ -195,13 +199,14 @@ echo [7/7] Downloading update !LATEST_VERSION!...
 
 :: Get the asset download URL (first .zip asset in the release)
 for /f "usebackq delims=" %%A in (`powershell -NoProfile -Command ^
-    "$headers = @{ Authorization = 'token !TOKEN!'; 'User-Agent' = 'update-bat' };" ^
-    "try {" ^
-    "  $r = Invoke-RestMethod -Uri 'https://api.github.com/repos/!REPO!/releases/latest' -Headers $headers -ErrorAction Stop;" ^
-    "  $asset = $r.assets | Where-Object { $_.name -like '*.zip' } | Select-Object -First 1;" ^
-    "  if ($asset) { Write-Output $asset.url } else { Write-Output 'NO_ASSET' }" ^
-    "} catch {" ^
-    "  Write-Output 'FETCH_ERROR'" ^
+    "try { " ^
+    "  $headers = @{ 'User-Agent' = 'update-bat' }; " ^
+    "  if ('!TOKEN!' -ne '') { $headers['Authorization'] = 'token !TOKEN!' } " ^
+    "  $r = Invoke-RestMethod -Uri 'https://api.github.com/repos/!REPO!/releases/latest' -Headers $headers -ErrorAction Stop; " ^
+    "  $asset = $r.assets | Where-Object { $_.name -like '*.zip' } | Select-Object -First 1; " ^
+    "  if ($asset) { Write-Output $asset.url } else { Write-Output 'NO_ASSET' } " ^
+    "} catch { " ^
+    "  Write-Output 'FETCH_ERROR' " ^
     "}"`) do (
     set "ASSET_URL=%%A"
 )
@@ -227,12 +232,13 @@ if "!ASSET_URL!"=="FETCH_ERROR" (
 echo        Downloading from GitHub...
 
 powershell -NoProfile -Command ^
-    "$headers = @{ Authorization = 'token !TOKEN!'; Accept = 'application/octet-stream'; 'User-Agent' = 'update-bat' };" ^
-    "try {" ^
-    "  Invoke-WebRequest -Uri '!ASSET_URL!' -Headers $headers -OutFile '!TEMP_ZIP!' -ErrorAction Stop;" ^
-    "  Write-Output 'OK'" ^
-    "} catch {" ^
-    "  Write-Output 'DOWNLOAD_ERROR'" ^
+    "try { " ^
+    "  $headers = @{ Accept = 'application/octet-stream'; 'User-Agent' = 'update-bat' }; " ^
+    "  if ('!TOKEN!' -ne '') { $headers['Authorization'] = 'token !TOKEN!' } " ^
+    "  Invoke-WebRequest -Uri '!ASSET_URL!' -Headers $headers -OutFile '!TEMP_ZIP!' -ErrorAction Stop; " ^
+    "  Write-Output 'OK' " ^
+    "} catch { " ^
+    "  Write-Output 'DOWNLOAD_ERROR' " ^
     "}" > "%TEMP_DIR%_dlresult.txt" 2>&1
 
 set /p DL_RESULT=<"%TEMP_DIR%_dlresult.txt"
