@@ -5,6 +5,8 @@ const path = require('path');
 const readline = require('readline');
 const fs = require('fs');
 const XLSX = require('xlsx');
+const { checkBrowsers } = require('./scripts/check-browsers');
+const { ensureBrowsers } = require('./scripts/preflight');
 
 const app = express();
 
@@ -668,7 +670,7 @@ app.post('/delete-data', (req, res) => {
 app.use('/report', express.static(path.join(__dirname, 'backstop_data')));
 
 // ---------------- RUN BROKEN LINK SCRIPTS ----------------
-app.post('/run-broken-links', (req, res) => {
+app.post('/run-broken-links', async (req, res) => {
   const script = req.body.script;
   const urlValidation = validatePageUrlsFile();
 
@@ -682,6 +684,22 @@ app.post('/run-broken-links', (req, res) => {
   }
 
   cleanupPageVerificationReports(script);
+
+  // Ensure the Playwright browser is present BEFORE running the test, so the
+  // user never sees the raw "npx playwright install" banner. On first run this
+  // performs a one-time install with progress streamed to the log; afterwards
+  // it's a millisecond check.
+  if (!checkBrowsers().installed) {
+    sendLog('⚙️ First-time setup: preparing browser (one-time, ~1-2 min)…\n');
+    try {
+      await ensureBrowsers({ onLog: sendLog });
+    } catch (err) {
+      sendLog(`❌ Browser setup failed: ${err.message}\n`);
+      sendLog('PROCESS_COMPLETED');
+      return res.status(500).json({ error: 'Browser setup failed', detail: err.message });
+    }
+  }
+
   sendLog(`🔍 Running Broken Link Script: ${script}\n`);
 
   const child = spawn('npx', ['playwright', 'test', script], {

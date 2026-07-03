@@ -8,3 +8,6 @@ node_modules/
 /playwright/.auth/
 backstop_data/
 config.json
+batch*
+.claude
+backup

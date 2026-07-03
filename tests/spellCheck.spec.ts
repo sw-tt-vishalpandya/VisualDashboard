@@ -131,11 +131,26 @@ function cleanText(text: string) {
 		.replace(/&[a-z]+;/gi, " ");
 }
 
+// IMPORTANT: do NOT lowercase here. Hunspell/nspell dictionaries are
+// case-sensitive for capitalized entries (proper nouns like "American",
+// "Microsoft", "English", acronyms like "API"). Lowercasing before the lookup
+// makes spell.correct() return false for all of them -> false "misspelled".
+// Case folding is handled correctly by isSpelledCorrectly() instead.
 function normalizeWord(word: string) {
 	return word
-		.toLowerCase()
-		.replace(/^['-]+|['-]+$/g, "")
-		.replace(/'s$/g, "");
+		.replace(/^['-]+|['-]+$/g, "")   // strip surrounding quotes/hyphens
+		.replace(/['’]s$/i, "");          // strip possessive: company's -> company
+}
+
+// Case-aware correctness check. nspell accepts a capitalized form of a
+// lowercase dictionary word (so "The" matches "the"), but NOT the lowercase
+// form of a capital-only word. So we check the original case first, then fall
+// back to lowercase only for sentence-initial capitalization.
+function isSpelledCorrectly(word: string) {
+	if (spell.correct(word)) return true;
+	const lower = word.toLowerCase();
+	if (lower !== word && spell.correct(lower)) return true;
+	return false;
 }
 
 function shouldIgnoreWord(word: string) {
@@ -146,7 +161,7 @@ function shouldIgnoreWord(word: string) {
 	if (/([a-z])\1{3,}/i.test(word)) return true;
 	if (word.includes("-")) {
 		const parts = word.split("-").filter(Boolean);
-		if (parts.length > 1 && parts.every((part) => shouldIgnoreWord(part) || spell.correct(part))) {
+		if (parts.length > 1 && parts.every((part) => shouldIgnoreWord(part) || isSpelledCorrectly(part))) {
 			return true;
 		}
 	}
@@ -160,9 +175,13 @@ function findMisspellings(text: string) {
 	for (const rawWord of words) {
 		const word = normalizeWord(rawWord);
 		if (shouldIgnoreWord(word)) continue;
-		if (spell.correct(word)) continue;
+		if (isSpelledCorrectly(word)) continue;
 
-		misspellings.set(word, spell.suggest(word).slice(0, 5));
+		// Dedupe case-insensitively so "Company"/"company" don't both appear.
+		const key = word.toLowerCase();
+		if (!misspellings.has(key)) {
+			misspellings.set(key, spell.suggest(word).slice(0, 5));
+		}
 	}
 
 	return misspellings;
