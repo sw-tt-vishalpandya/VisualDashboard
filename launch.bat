@@ -37,6 +37,21 @@ if "%NEEDS_INSTALL%"=="1" (
     echo.
 )
 
+:: ---- VERIFY PLAYWRIGHT BROWSERS (every launch, independent of install flag) ----
+:: This is the fix for the "npx playwright install" banner: the node-deps flag
+:: above can pass while browsers are missing/stale. preflight.js verifies the
+:: exact-version binary and only downloads when needed (with retry + progress).
+echo Verifying browser components...
+node "%ROOT%\scripts\preflight.js"
+if %errorlevel% neq 0 (
+    color 0C
+    echo.
+    echo [ERROR] Browser setup failed. See messages above.
+    pause
+    exit /b 1
+)
+echo.
+
 :: ---- START REACT (background via temp helper) ----
 set "REACT_BAT=%TEMP%\start_react_%RANDOM%.bat"
 echo @echo off > "%REACT_BAT%"
